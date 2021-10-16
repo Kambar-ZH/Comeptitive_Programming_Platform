@@ -33,9 +33,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("File Upload Endpoint Hit")
 
 	r.ParseMultipartForm(10 << 20)
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
+
 	file, handler, err := r.FormFile("myFile")
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
@@ -56,15 +54,13 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// read all of the contents of our uploaded file into a
-	// byte array
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error occured on reading file")
 		fmt.Println(err)
 		return
 	}
-	// write this byte array to our temporary file
+	
 	tempFile.Write(fileBytes)
 	tempFile.Close()
 

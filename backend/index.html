@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./templates/css/style.css">
+  </head>
+  <body>
+    <div>
+      <form
+        enctype="multipart/form-data"
+        action="http://localhost:8080/upload"
+        method="post"
+      >
+        <label for="problemName">Problem Name</label>
+        <select id="problemName" name="problemName">
+          <option value="A">A. Sum on the array</option>
+          <option value="B">B. Fibonacci number</option>
+          <option value="C">C. Undefined</option>
+        </select>
+        <input type="file" name="myFile" accept=".exe"/>
+        <input type="submit" value="upload" />
+      </form>
+    </div>
+  </body>
+</html>

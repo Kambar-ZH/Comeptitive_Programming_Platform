@@ -19,7 +19,7 @@ type ViewData struct {
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("index.html")
+	tmpl, err := template.ParseFiles("../frontend/index.html")
 	if err != nil {
 		fmt.Fprintf(w, "Error occured on loading home page")
 		fmt.Println(err)
@@ -52,6 +52,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	tempFile, err := ioutil.TempFile("../temp-solutions", "upload-*.exe")
 	if err != nil {
 		fmt.Println("Error occured on creating temp file")
+		fmt.Println(err)
 		return
 	}
 
@@ -60,6 +61,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error occured on reading file")
+		fmt.Println(err)
 		return
 	}
 	// write this byte array to our temporary file
@@ -71,27 +73,20 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	passed, failedTest := test.TestSolution(fileName, problemName)
 
-	// data := ViewData{
-	// 	FileName:    handler.Filename,
-	// 	ProblemName: problemName,
-	// 	Passed:      passed,
-	// 	FailedTest:  failedTest,
-	// }
-
-	fmt.Fprintf(w, "Successfully uploaded file %s for the problem %s\n", fileName, problemName)
-
-	if passed {
-		fmt.Fprintf(w, "All tests passed successfully\n")
-	} else {
-		fmt.Fprintf(w, "Wrong answer on test %d\n", failedTest)
+	data := ViewData{
+		FileName:    handler.Filename,
+		ProblemName: problemName,
+		Passed:      passed,
+		FailedTest:  failedTest,
 	}
 
-	// tmpl, err := template.ParseFiles("upload.html")
-	// if err != nil {
-	// 	fmt.Fprintf(w, "Error occured on loading upload page")
-	// 	return
-	// }
-	// tmpl.Execute(w, data)
+	tmpl, err := template.ParseFiles("../frontend/upload.html")
+	if err != nil {
+		fmt.Fprintf(w, "Error occured on loading upload page")
+		fmt.Println(err)
+		return
+	}
+	tmpl.Execute(w, data)
 }
 
 func setupRoutes() {

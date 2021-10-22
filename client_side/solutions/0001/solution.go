@@ -12,6 +12,7 @@ var writer *bufio.Writer = bufio.NewWriter(os.Stdout)
 func printf(f string, a ...interface{}) { fmt.Fprintf(writer, f, a...) }
 func scanf(f string, a ...interface{})  { fmt.Fscanf(reader, f, a...) }
 
+// Sum on the array problem
 func main() {
 	var N int
 	fmt.Scanf("%d\n", &N)

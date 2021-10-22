@@ -13,5 +13,5 @@ func main() {
 	for i := 2; i <= N; i++ {
 		F[i] = F[i - 1] + F[i - 2]
 	}
-	fmt.Println(F[N - 1])
+	fmt.Println(F[N])
 }

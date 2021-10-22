@@ -171,7 +171,7 @@ func (s *Server) basicHandler() chi.Router {
 		s.store.Create(r.Context(), user)
 	})
 
-	r.Delete("/laptops/{id}", func(w http.ResponseWriter, r *http.Request) {
+	r.Delete("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {

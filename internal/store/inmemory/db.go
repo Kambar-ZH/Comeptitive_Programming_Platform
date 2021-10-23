@@ -1,68 +1,42 @@
 package inmemory
 
 import (
-	"context"
-	"fmt"
-	"site/internal/store"
 	"site/internal/models"
+	"site/internal/store"
 	"sync"
 )
 
 type DB struct {
-	data map[int]*models.User
-	mu   *sync.RWMutex
+	usersRepo       store.UserRepository
+	submissionsRepo store.SubmissionRepository
+
+	mu *sync.RWMutex
 }
 
 func NewDB() store.Store {
 	return &DB{
-		data: make(map[int]*models.User),
-		mu:   new(sync.RWMutex),
+		mu: new(sync.RWMutex),
 	}
 }
 
-func (db *DB) Create(ctx context.Context, user *models.User) error {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	db.data[user.Id] = user
-	return nil
-}
-
-func (db *DB) All(ctx context.Context) ([]*models.User, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	users := make([]*models.User, 0, len(db.data))
-	for _, user := range db.data {
-		users = append(users, user)
+func (db *DB) Users() store.UserRepository {
+	if db.usersRepo == nil {
+		db.usersRepo = &UsersRepo{
+			data: make(map[int]*models.User),
+			mu:   new(sync.RWMutex),
+		}
 	}
 
-	return users, nil
+	return db.usersRepo
 }
 
-func (db *DB) ById(ctx context.Context, id int) (*models.User, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	user, ok := db.data[id]
-	if !ok {
-		return nil, fmt.Errorf("No user with id %d", id)
+func (db *DB) Submissions() store.SubmissionRepository {
+	if db.submissionsRepo == nil {
+		db.submissionsRepo = &SubmissionsRepo{
+			data: make(map[int]*models.Submission),
+			mu:   new(sync.RWMutex),
+		}
 	}
-	return user, nil
-}
 
-func (db *DB) Update(ctx context.Context, user *models.User) error {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	db.data[user.Id] = user
-	return nil
-}
-
-func (db *DB) Delete(ctx context.Context, id int) error {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	delete(db.data, id)
-	return nil
+	return db.submissionsRepo
 }

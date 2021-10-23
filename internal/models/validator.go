@@ -1,7 +1,13 @@
 package models
 
+type TestCase struct {
+	Id        int
+	InputFile string
+}
+
+
 type Validator struct {
-	ProblemName  string
+	ProblemId  int
 	SolutionFile string
 	TestCases    []TestCase
 }

@@ -6,17 +6,17 @@ import (
 )
 
 const (
-	participantSolutionFile = "../../cmd/myapp/participant_solution.go"
-	participantSolutionExe  = "../../cmd/myapp/participant_solution.exe"
-	mainSolutionFile        = "../../cmd/myapp/main_solution.go"
-	mainSolutionExe         = "../../cmd/myapp/main_solution.exe"
-	clearFile               = "../../cmd/myapp/clear.txt"
+	participantSolutionFile = "../../cmd/myapp/participant_solution/participant_solution.go"
+	participantSolutionExe  = "../../cmd/myapp/participant_solution/participant_solution.exe"
+	mainSolutionFile        = "../../cmd/myapp/main_solution/main_solution.go"
+	mainSolutionExe         = "../../cmd/myapp/main_solution/main_solution.exe"
+	clearFile               = "../../cmd/myapp/main_solution/clear.txt"
 )
 
 var (
 	tests = []models.Validator{
 		{
-			ProblemName:  "0001",
+			ProblemId:    1,
 			SolutionFile: "../../test/problems/0001/solution.go",
 			TestCases: []models.TestCase{
 				{
@@ -28,7 +28,7 @@ var (
 			},
 		},
 		{
-			ProblemName:  "0002",
+			ProblemId:    2,
 			SolutionFile: "../../test/problems/0002/solution.go",
 			TestCases: []models.TestCase{
 				{
@@ -84,16 +84,21 @@ func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase
 	return models.PASSED
 }
 
-func TestSolution(tempFile string, problemName string) (models.Verdict, int) {
+func TestSolution(tempFile string, problemId int) models.SubmissionResult {
 	for _, test := range tests {
-		if test.ProblemName == problemName {
+		if test.ProblemId == problemId {
 			for id, testCase := range test.TestCases {
 				verdict := RunTestCase(test.SolutionFile, tempFile, id+1, testCase)
 				if verdict != models.PASSED {
-					return verdict, id + 1
+					return models.SubmissionResult{
+						Verdict:    verdict,
+						FailedTest: testCase.Id,
+					}
 				}
 			}
 		}
 	}
-	return models.PASSED, -1
+	return models.SubmissionResult{
+		Verdict: models.PASSED,
+	}
 }

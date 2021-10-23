@@ -36,12 +36,12 @@ type Server struct {
 
 type ViewData struct {
 	FileName    string
-	ProblemName string
+	ProblemName int
 	Verdict     models.Verdict
 	FailedTest  int
 }
 
-func homePage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) homePage(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles(indexTemp)
 	if err != nil {
 		fmt.Fprintf(w, "Error occured on loading home page")
@@ -58,7 +58,7 @@ func printFileInfo(handler *multipart.FileHeader) {
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
+func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 
 	file, handler, err := r.FormFile("myFile")
@@ -87,17 +87,36 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	tempFile.Write(fileBytes)
 	tempFile.Close()
 
-	problemName := r.FormValue("problemName")
+	problemId, err := strconv.Atoi(r.FormValue("problemId"))
+	if err != nil {
+		fmt.Println("Error on parsing problem id")
+		fmt.Println(err)
+		return
+	}
 	fileName := strings.ReplaceAll(tempFile.Name(), "\\\\", "/")
 	fmt.Println(fileName)
 
-	verdict, failedTest := test.TestSolution(fileName, problemName)
+	////////////////////////////
+	// 		Test solution 	  //
+	////////////////////////////
+
+	subResult := test.TestSolution(fileName, problemId)
+	s.store.Submissions().Create(s.ctx, &models.Submission{
+		Id:        15, // hardcoded
+		ProblemId: problemId,
+		AuthorId: 12,
+		SubmissionResult: subResult,
+	})
+
+	////////////////////////////
+	// Render upload template //
+	////////////////////////////
 
 	data := ViewData{
 		FileName:    handler.Filename,
-		ProblemName: problemName,
-		Verdict:     verdict,
-		FailedTest:  failedTest,
+		ProblemName: problemId,
+		Verdict:     subResult.Verdict,
+		FailedTest:  subResult.FailedTest,
 	}
 
 	tmpl, err := template.ParseFiles(uploadTemp)
@@ -118,29 +137,101 @@ func NewServer(ctx context.Context, addres string, store store.Store) *Server {
 	}
 }
 
-func (s *Server) basicHandler() chi.Router {
-	r := chi.NewRouter()
+func (s *Server) SubmissionCrud(r chi.Router) chi.Router {
+	r.Post("/submissions", func(w http.ResponseWriter, r *http.Request) {
+		submission := new(models.Submission)
+		if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if err := s.store.Submissions().Create(r.Context(), submission); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+	})
 
-	r.HandleFunc("/upload", uploadFile)
-	r.HandleFunc("/", homePage)
-	r.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	r.Get("/submissions", func(w http.ResponseWriter, r *http.Request) {
+		submissions, err := s.store.Submissions().All(r.Context())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		render.JSON(w, r, submissions)
+	})
 
+	r.Get("/submissions/{id}", func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		submission, err := s.store.Submissions().ById(r.Context(), id)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+
+		render.JSON(w, r, submission)
+	})
+
+	r.Put("/submissions", func(w http.ResponseWriter, r *http.Request) {
+		submission := new(models.Submission)
+		if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.store.Submissions().Update(r.Context(), submission); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	r.Delete("/submissions/{id}", func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err = s.store.Submissions().Delete(r.Context(), id); err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	return r
+}
+
+func (s *Server) UserCrud(r chi.Router) chi.Router {
 	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {
 		user := new(models.User)
 		if err := json.NewDecoder(r.Body).Decode(user); err != nil {
-			fmt.Fprintf(w, "Unknowr err: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		s.store.Create(r.Context(), user)
+		if err := s.store.Users().Create(r.Context(), user); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
 	})
 
 	r.Get("/users", func(w http.ResponseWriter, r *http.Request) {
-		users, err := s.store.All(r.Context())
+		users, err := s.store.Users().All(r.Context())
 		if err != nil {
-			fmt.Fprintf(w, "Unknowr err: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 		render.JSON(w, r, users)
 	})
 
@@ -148,39 +239,59 @@ func (s *Server) basicHandler() chi.Router {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			fmt.Fprintf(w, "Unknown err: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		user, err := s.store.ById(r.Context(), id)
+		user, err := s.store.Users().ById(r.Context(), id)
 		if err != nil {
-			fmt.Fprintf(w, "Unknown err: %v", err)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-
+		w.WriteHeader(http.StatusOK)
 		render.JSON(w, r, user)
 	})
 
 	r.Put("/users", func(w http.ResponseWriter, r *http.Request) {
 		user := new(models.User)
 		if err := json.NewDecoder(r.Body).Decode(user); err != nil {
-			fmt.Fprintf(w, "Unknowr err: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		s.store.Create(r.Context(), user)
+		if err := s.store.Users().Update(r.Context(), user); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
 	})
 
 	r.Delete("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			fmt.Fprintf(w, "Unknown err: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		s.store.Delete(r.Context(), id)
+		if err = s.store.Users().Delete(r.Context(), id); err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	})
+
+	return r
+}
+
+func (s *Server) basicHandler() chi.Router {
+	r := chi.NewRouter()
+
+	s.UserCrud(r)
+	s.SubmissionCrud(r)
+
+	r.HandleFunc("/upload", s.uploadFile)
+	r.HandleFunc("/", s.homePage)
 
 	return r
 }

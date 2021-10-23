@@ -14,6 +14,7 @@ func WriteFile(inFile, fromFile string) error {
 	fo, err := os.Create(inFile)
 	if err != nil {
 		fmt.Println("Error on opening file")
+		fmt.Println(err)
 		return err
 	}
 
@@ -40,6 +41,7 @@ func MakeExe() error {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Could not make file")
+		fmt.Println(err)
 		return err
 	}
 	fmt.Println(out.String())
@@ -111,10 +113,10 @@ func Run(file string, tCase models.TestCase) (string, error) {
 	}()
 	select {
 	case verdict := (<-ch):
-		fmt.Println("MEEEEE", verdict)
+		fmt.Println("MEEEEEE")
 		return verdict, nil
 	case err := (<-errCh):
-		fmt.Println("YOOOOU", err)
+		fmt.Println("YOUUUUU")
 		return "", err
 	case <-time.After(3 * time.Second):
 		return "", fmt.Errorf("Timeout") 

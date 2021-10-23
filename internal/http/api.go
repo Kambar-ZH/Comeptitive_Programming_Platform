@@ -144,7 +144,7 @@ func (s *Server) basicHandler() chi.Router {
 		render.JSON(w, r, users)
 	})
 
-	r.Get("/laptops/{id}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {

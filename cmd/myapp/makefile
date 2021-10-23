@@ -1,5 +1,5 @@
-all: program1 program2
-program1:
-	go build participant_solution.go
-program2:
-	go build main_solution.go
+all: submake1 submake2
+submake1:
+	make -C main_solution
+submake2:
+	make -C participant_solution

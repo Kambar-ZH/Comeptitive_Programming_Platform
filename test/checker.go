@@ -6,36 +6,36 @@ import (
 )
 
 const (
-	participantSolutionFile = "C:/Users/User/Documents/Visual Studio/GoLang/test/cmd/myapp/participant_solution.go"
-	participantSolutionExe  = "C:/Users/User/Documents/Visual Studio/GoLang/test/cmd/myapp/participant_solution.exe"
-	mainSolutionFile        = "C:/Users/User/Documents/Visual Studio/GoLang/test/cmd/myapp/main_solution.go"
-	mainSolutionExe         = "C:/Users/User/Documents/Visual Studio/GoLang/test/cmd/myapp/main_solution.exe"
-	clearFile               = "C:/Users/User/Documents/Visual Studio/GoLang/test/cmd/myapp/clear.txt"
+	participantSolutionFile = "../../cmd/myapp/participant_solution.go"
+	participantSolutionExe  = "../../cmd/myapp/participant_solution.exe"
+	mainSolutionFile        = "../../cmd/myapp/main_solution.go"
+	mainSolutionExe         = "../../cmd/myapp/main_solution.exe"
+	clearFile               = "../../cmd/myapp/clear.txt"
 )
 
 var (
 	tests = []models.Validator{
 		{
 			ProblemName:  "0001",
-			SolutionFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0001/solution.go",
+			SolutionFile: "../../test/problems/0001/solution.go",
 			TestCases: []models.TestCase{
 				{
-					InputFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0001/tests/1.txt",
+					InputFile: "../../test/problems/0001/tests/1.txt",
 				},
 				{
-					InputFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0001/tests/2.txt",
+					InputFile: "../../test/problems/0001/tests/2.txt",
 				},
 			},
 		},
 		{
 			ProblemName:  "0002",
-			SolutionFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0002/solution.go",
+			SolutionFile: "../../test/problems/0002/solution.go",
 			TestCases: []models.TestCase{
 				{
-					InputFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0002/tests/1.txt",
+					InputFile: "../../test/problems/0002/tests/1.txt",
 				},
 				{
-					InputFile: "C:/Users/User/Documents/Visual Studio/GoLang/test/test/problems/0002/tests/2.txt",
+					InputFile: "../../test/problems/0002/tests/2.txt",
 				},
 			},
 		},

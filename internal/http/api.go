@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	indexTemp       = "C:/Users/User/Documents/Visual Studio/GoLang/test/web/template/index.html"
-	uploadTemp      = "C:/Users/User/Documents/Visual Studio/GoLang/test/web/template/upload.html"
-	problemsStorage = "C:/Users/User/Documents/Visual Studio/GoLang/test/temp_solutions"
+	indexTemp       = "../../web/template/index.html"
+	uploadTemp      = "../../web/template/upload.html"
+	problemsStorage = "../../temp_solutions"
 )
 
 type Server struct {
@@ -171,7 +171,7 @@ func (s *Server) basicHandler() chi.Router {
 		s.store.Create(r.Context(), user)
 	})
 
-	r.Delete("/laptops/{id}", func(w http.ResponseWriter, r *http.Request) {
+	r.Delete("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {

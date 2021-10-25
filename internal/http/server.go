@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"site/internal/models"
 	"site/internal/store"
-	"site/test"
+	"site/test/compiler"
+	"site/test/inmemory"
 	"strconv"
 	"strings"
 	"text/template"
@@ -17,12 +18,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-)
-
-const (
-	indexTemp       = "../../web/template/index.html"
-	uploadTemp      = "../../web/template/upload.html"
-	problemsStorage = "../../temp_solutions"
 )
 
 type Server struct {
@@ -42,7 +37,7 @@ type ViewData struct {
 }
 
 func (s *Server) homePage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles(indexTemp)
+	tmpl, err := template.ParseFiles(inmemory.GetInstance().IndexHtml)
 	if err != nil {
 		fmt.Fprintf(w, "Error occured on loading home page")
 		fmt.Println(err)
@@ -70,7 +65,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	printFileInfo(handler)
 
-	tempFile, err := ioutil.TempFile(problemsStorage, "upload-*")
+	tempFile, err := ioutil.TempFile(inmemory.GetInstance().TempSolutions, "upload-*")
 	if err != nil {
 		fmt.Println("Error occured on creating temp file")
 		fmt.Println(err)
@@ -100,11 +95,11 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	// 		Test solution 	  //
 	////////////////////////////
 
-	subResult := test.TestSolution(fileName, problemId)
+	subResult := compiler.TestSolution(fileName, problemId)
 	s.store.Submissions().Create(s.ctx, &models.Submission{
-		Id:        15, // hardcoded
-		ProblemId: problemId,
-		AuthorId: 12,
+		Id:               15, // hardcoded
+		ProblemId:        problemId,
+		AuthorId:         12,
 		SubmissionResult: subResult,
 	})
 
@@ -119,7 +114,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		FailedTest:  subResult.FailedTest,
 	}
 
-	tmpl, err := template.ParseFiles(uploadTemp)
+	tmpl, err := template.ParseFiles(inmemory.GetInstance().UploadHtml)
 	if err != nil {
 		fmt.Fprintf(w, "Error occured on loading upload page")
 		fmt.Println(err)

@@ -1,24 +1,28 @@
 package main
 
 import (
-	"context"
+	// "context"
+	// "fmt"
+	// "site/internal/http"
+	// "site/internal/store/inmemory"
 	"fmt"
-	"site/internal/http"
-	"site/internal/store/inmemory"
+	"site/test/compiler"
 )
-
-// "site/internal/http"
 
 func main() {
 
-	store := inmemory.NewDB()
+	// store := inmemory.NewDB()
 
-	srv := http.NewServer(context.Background(), ":8080", store)
+	// srv := http.NewServer(context.Background(), ":8080", store)
 
-	if err := srv.Run(); err != nil {
+	// if err := srv.Run(); err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	// srv.WaitForGracefulTermination()
+	err := compiler.BuildExe()
+	if err != nil {
 		fmt.Println(err)
+		return
 	}
-
-	srv.WaitForGracefulTermination()
-	// test.MakeExe()
 }

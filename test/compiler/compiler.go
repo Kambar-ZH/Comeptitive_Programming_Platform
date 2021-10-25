@@ -1,4 +1,4 @@
-package test
+package compiler
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func WriteFile(inFile, fromFile string) error {
+func CopyFile(inFile, fromFile string) error {
 	fo, err := os.Create(inFile)
 	if err != nil {
 		fmt.Println("Error on opening file")
@@ -34,7 +34,7 @@ func WriteFile(inFile, fromFile string) error {
 	return nil
 }
 
-func MakeExe() error {
+func BuildExe() error {
 	cmd := exec.Command("make")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -44,11 +44,10 @@ func MakeExe() error {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println(out.String())
 	return nil
 }
 
-func RunComplete(file string, tCase models.TestCase) (string, error) {
+func ExecuteFile(file string, tCase models.TestCase) (string, error) {
 	cmd := exec.Command(file)
 
 	stdin, err := cmd.StdinPipe()
@@ -101,22 +100,22 @@ func RunComplete(file string, tCase models.TestCase) (string, error) {
 	return string(result), nil
 }
 
-func Run(file string, tCase models.TestCase) (string, error) {
+func MustExecuteFile(file string, tCase models.TestCase) (string, error) {
 	ch := make(chan string)
-	errCh := make(chan error)
+	errorCh := make(chan error)
+	
 	go func() {
-		if verdict, err := RunComplete(file, tCase); err == nil {
+		if verdict, err := ExecuteFile(file, tCase); err == nil {
 			ch <- verdict
 		} else {
-			errCh <-err
+			errorCh <-err
 		}
 	}()
+
 	select {
-	case verdict := (<-ch):
-		fmt.Println("MEEEEEE")
+	case verdict := <-ch:
 		return verdict, nil
-	case err := (<-errCh):
-		fmt.Println("YOUUUUU")
+	case err := <-errorCh:
 		return "", err
 	case <-time.After(3 * time.Second):
 		return "", fmt.Errorf("Timeout") 

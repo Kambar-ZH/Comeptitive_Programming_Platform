@@ -3,58 +3,64 @@ package inmemory
 import (
 	"context"
 	"fmt"
-	"site/internal/models"
+	"site/grpc/api"
 	"sync"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type SubmissionsRepo struct {
-	data map[int]*models.Submission
+type SubmissionRepo struct {
+	data map[int32]*api.Submission
+	api.UnimplementedSubmissionRepositoryServer
 	mu   *sync.RWMutex
 }
 
-func (db *SubmissionsRepo) Create(ctx context.Context, submission *models.Submission) error {
+func (db *SubmissionRepo) All(ctx context.Context, empty *api.Empty) (*api.SubmissionList, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	res := []*api.Submission{}
+	for _, submission := range db.data {
+		res = append(res, submission)
+	}
+	ans := api.SubmissionList{Submissions: res}
+
+	return &ans, nil
+}
+
+func (db *SubmissionRepo) ById(ctx context.Context, submission *api.SubmissionRequestId) (*api.Submission, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if submission, ok := db.data[submission.Id]; ok {
+		return submission, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("submission with id %d does not exist", submission.Id))
+}
+
+func (db *SubmissionRepo) Create(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	db.data[submission.Id] = submission
-	return nil
-}
-
-func (db *SubmissionsRepo) All(ctx context.Context) ([]*models.Submission, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	submissions := make([]*models.Submission, 0, len(db.data))
-	for _, submission := range db.data {
-		submissions = append(submissions, submission)
-	}
-
-	return submissions, nil
-}
-
-func (db *SubmissionsRepo) ById(ctx context.Context, id int) (*models.Submission, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	submission, ok := db.data[id]
-	if !ok {
-		return nil, fmt.Errorf("no submission with id %d", id)
-	}
 	return submission, nil
 }
 
-func (db *SubmissionsRepo) Update(ctx context.Context, submission *models.Submission) error {
+func (db *SubmissionRepo) Update(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-
 	db.data[submission.Id] = submission
-	return nil
+
+	return submission, nil
 }
 
-func (db *SubmissionsRepo) Delete(ctx context.Context, id int) error {
+func (db *SubmissionRepo) Delete(ctx context.Context, submission *api.SubmissionRequestId) (*api.Empty, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-
-	delete(db.data, id)
-	return nil
+	if _, ok := db.data[submission.Id]; !ok {
+		return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+	}
+	delete(db.data, submission.Id)
+	return &api.Empty{}, nil
 }

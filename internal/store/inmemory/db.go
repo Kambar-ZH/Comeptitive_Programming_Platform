@@ -1,14 +1,14 @@
 package inmemory
 
 import (
-	"site/internal/models"
+	"site/grpc/api"
 	"site/internal/store"
 	"sync"
 )
 
 type DB struct {
-	usersRepo       store.UserRepository
-	submissionsRepo store.SubmissionRepository
+	usersRepo       api.UserRepositoryServer
+	submissionsRepo api.SubmissionRepositoryServer
 
 	mu *sync.RWMutex
 }
@@ -21,9 +21,9 @@ func NewDB() store.Store {
 
 func (db *DB) Users() store.UserRepository {
 	if db.usersRepo == nil {
-		db.usersRepo = &UsersRepo{
-			data: make(map[int]*models.User),
-			mu:   new(sync.RWMutex),
+		db.usersRepo = &UserRepo{
+			data: make(map[int32]*api.User),
+			mu:   &sync.RWMutex{},
 		}
 	}
 
@@ -32,9 +32,9 @@ func (db *DB) Users() store.UserRepository {
 
 func (db *DB) Submissions() store.SubmissionRepository {
 	if db.submissionsRepo == nil {
-		db.submissionsRepo = &SubmissionsRepo{
-			data: make(map[int]*models.Submission),
-			mu:   new(sync.RWMutex),
+		db.submissionsRepo = &SubmissionRepo{
+			data: make(map[int32]*api.Submission),
+			mu:   &sync.RWMutex{},
 		}
 	}
 

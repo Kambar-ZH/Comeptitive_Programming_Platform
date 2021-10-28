@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "example/api";
+package api;
+
+service UserRepository {
+  rpc All(Empty) returns (UserList);
+  rpc ById(UserRequestId) returns (User);
+  rpc Create(User) returns (User);
+  rpc Update(User) returns (User);
+  rpc Delete(UserRequestId) returns (Empty);
+}
+
+message UserList {
+  repeated User users = 1;
+}
+
+message UserRequestId {
+  int32 id = 1;
+}
+
+message User {
+  int32 id = 1;
+  string handle = 2;
+  string country = 3;
+  string city = 4;
+  int32 rating = 5;
+  int32 maxRating = 6;
+  string avatar = 7;
+}
+
+message Empty {}
+
+service SubmissionRepository {
+  rpc All(Empty) returns (SubmissionList);
+  rpc ById(SubmissionRequestId) returns (Submission);
+  rpc Create(Submission) returns (Submission);
+  rpc Update(Submission) returns (Submission);
+  rpc Delete(SubmissionRequestId) returns (Empty);
+}
+
+message SubmissionList {
+  repeated Submission submissions = 1;
+}
+
+message SubmissionRequestId {
+  int32 id = 1;
+}
+
+enum Verdict {
+  PASSED = 0;
+  FAILED = 1;
+  COMPILATION_ERROR = 2;
+  TIME_LIMIT_ERROR = 3;
+  UNKNOWN_ERROR = 4;
+}
+
+message SubmissionResult {
+  Verdict verdict = 1;
+  int32 failedTest = 2;
+}
+
+message Submission {
+  int32 id = 1;
+  string date = 2;
+  int32 authorId = 3;
+  int32 problemId = 4;
+  SubmissionResult submissionResult = 5;
+}

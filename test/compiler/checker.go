@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"site/grpc/api"
 	"site/internal/models"
 	"site/test/inmemory"
 )
@@ -32,50 +33,50 @@ func CleanUp() error {
 	return nil
 }
 
-func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase) models.Verdict {
+func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase) api.Verdict {
 	expected, err := MustExecuteFile(inmemory.GetInstance().MainSolutionExe, testCase)
 	if err != nil {
 		fmt.Println("Error on running main solution")
-		return models.UNKNOWN_ERROR
+		return api.Verdict_UNKNOWN_ERROR
 	}
 	actual, err := MustExecuteFile(inmemory.GetInstance().ParticipantSolutionExe, testCase)
 	if err != nil {
 		fmt.Println("Error on running participant solution")
-		return models.COMPILATION_ERROR
+		return api.Verdict_COMPILATION_ERROR
 	}
 
 	if expected != actual {
-		fmt.Printf("FAIL on test %d:\nExpected: %s\nActual: %s\n", id, expected, actual)
-		return models.FAILED
+		fmt.Printf("[%d] incorrect result on test::\nExpected: %s\nActual: %s\n", id, expected, actual)
+		return api.Verdict_FAILED
 	}
 
-	fmt.Printf("OK on test %d:\nExpected: %s\nActual: %s\n", id, expected, actual)
-	return models.PASSED
+	fmt.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
+	return api.Verdict_PASSED
 }
 
-func TestSolution(tempFile string, problemId int) models.SubmissionResult {
+func TestSolution(tempFile string, problemId int) *api.SubmissionResult {
 	test, err := inmemory.GetInstance().GetTestByID(problemId)
 	if err != nil {
-		return models.SubmissionResult{
-			Verdict: models.UNKNOWN_ERROR,
+		return &api.SubmissionResult{
+			Verdict: api.Verdict_UNKNOWN_ERROR,
 		}
 	}
 	if err := PrepareExe(test.SolutionFile, tempFile); err != nil {
-		return models.SubmissionResult{
-			Verdict: models.COMPILATION_ERROR,
+		return &api.SubmissionResult{
+			Verdict: api.Verdict_COMPILATION_ERROR,
 		}
 	}
 	defer CleanUp()
 	for id, testCase := range test.TestCases {
 		verdict := RunTestCase(test.SolutionFile, tempFile, id+1, testCase)
-		if verdict != models.PASSED {
-			return models.SubmissionResult{
+		if verdict != api.Verdict_PASSED {
+			return &api.SubmissionResult{
 				Verdict:    verdict,
-				FailedTest: testCase.Id + 1,
+				FailedTest: int32(testCase.Id + 1),
 			}
 		}
 	}
-	return models.SubmissionResult{
-		Verdict: models.PASSED,
+	return &api.SubmissionResult{
+		Verdict: api.Verdict_PASSED,
 	}
 }

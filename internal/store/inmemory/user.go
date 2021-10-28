@@ -3,58 +3,64 @@ package inmemory
 import (
 	"context"
 	"fmt"
-	"site/internal/models"
+	"site/grpc/api"
 	"sync"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type UsersRepo struct {
-	data map[int]*models.User
-	mu   *sync.RWMutex
+type UserRepo struct {
+	data map[int32]*api.User
+	api.UnimplementedUserRepositoryServer
+	mu *sync.RWMutex
 }
 
-func (db *UsersRepo) Create(ctx context.Context, user *models.User) error {
+func (db *UserRepo) All(ctx context.Context, empty *api.Empty) (*api.UserList, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	res := []*api.User{}
+	for _, user := range db.data {
+		res = append(res, user)
+	}
+	ans := api.UserList{Users: res}
+
+	return &ans, nil
+}
+
+func (db *UserRepo) ById(ctx context.Context, user *api.UserRequestId) (*api.User, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if user, ok := db.data[user.Id]; ok {
+		return user, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with id %d does not exist", user.Id))
+}
+
+func (db *UserRepo) Create(ctx context.Context, user *api.User) (*api.User, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
 	db.data[user.Id] = user
-	return nil
-}
-
-func (db *UsersRepo) All(ctx context.Context) ([]*models.User, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	users := make([]*models.User, 0, len(db.data))
-	for _, user := range db.data {
-		users = append(users, user)
-	}
-
-	return users, nil
-}
-
-func (db *UsersRepo) ById(ctx context.Context, id int) (*models.User, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	user, ok := db.data[id]
-	if !ok {
-		return nil, fmt.Errorf("no user with id %d", id)
-	}
 	return user, nil
 }
 
-func (db *UsersRepo) Update(ctx context.Context, user *models.User) error {
+func (db *UserRepo) Update(ctx context.Context, user *api.User) (*api.User, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-
 	db.data[user.Id] = user
-	return nil
+
+	return user, nil
 }
 
-func (db *UsersRepo) Delete(ctx context.Context, id int) error {
+func (db *UserRepo) Delete(ctx context.Context, user *api.UserRequestId) (*api.Empty, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-
-	delete(db.data, id)
-	return nil
+	if _, ok := db.data[user.Id]; !ok {
+		return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+	}
+	delete(db.data, user.Id)
+	return &api.Empty{}, nil
 }

@@ -44,11 +44,11 @@
 <body>
   <div>
     <h1>Successfully uploaded file {{ .FileName}} for the problem {{ .ProblemName}}</h1>
-    {{if eq .Verdict.String "Passed"}}
+    {{if eq .Verdict 0}}
     <h2>All tests passed successfully</h2>
-    {{else if eq .Verdict.String "Failed"}}
+    {{else if eq .Verdict 1}}
     <h2>Wrong answer on test {{ .FailedTest}}</h2>
-    {{else if eq .Verdict.String "Compilation Error"}}
+    {{else if eq .Verdict 2}}
     <h2>Compilation error</h2>
     {{else}}
     <h2>Unknown error</h2>

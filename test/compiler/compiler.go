@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"site/internal/models"
@@ -13,21 +14,21 @@ import (
 func CopyFile(inFile, fromFile string) error {
 	fo, err := os.Create(inFile)
 	if err != nil {
-		fmt.Println("Error on opening file")
-		fmt.Println(err)
+		log.Println("error on opening file")
+		log.Println(err)
 		return err
 	}
 
 	defer func() {
 		if err := fo.Close(); err != nil {
-			fmt.Println("Error on closing file")
+			log.Println("error on closing file")
 			return
 		}
 	}()
 
 	data, err := os.ReadFile(fromFile)
 	if err != nil {
-		fmt.Println("File write error")
+		log.Println("error on reading file")
 		return err
 	}
 	fo.Write(data)
@@ -40,8 +41,8 @@ func BuildExe() error {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Could not make file")
-		fmt.Println(err)
+		log.Println("error: could not make file")
+		log.Println(err)
 		return err
 	}
 	return nil
@@ -53,48 +54,48 @@ func ExecuteFile(file string, tCase models.TestCase) (string, error) {
 	stdin, err := cmd.StdinPipe()
 	defer func() {
 		if err := stdin.Close(); err != nil {
-			fmt.Println("Error on closing stdin file")
+			log.Println("error on closing stdin file")
 			return
 		}
 	}()
 	if err != nil {
-		fmt.Println("StdinPipe error")
+		log.Println("stdinPipe error")
 		return "", err
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	defer func() {
 		if err := stdout.Close(); err != nil {
-			fmt.Println("Error on closing stdout file")
+			log.Println("error on closing stdout file")
 			return
 		}
 	}()
 
 	if err != nil {
-		fmt.Println("StdoutPipe error")
+		log.Println("stdoutPipe error")
 		return "", err
 	}
 
 	if err := cmd.Start(); err != nil {
-		fmt.Println("Cmd start error")
+		log.Println("cmd start error")
 		return "", err
 	}
 
 	input, err := os.ReadFile(tCase.InputFile)
 	if err != nil {
-		fmt.Println("File write error")
+		log.Println("file write error")
 		return "", err
 	}
-	
+
 	_, err = stdin.Write(input)
 	if err != nil {
-		fmt.Println("Stdin write error")
+		log.Println("stdin write error")
 		return "", err
 	}
 
 	result, err := ioutil.ReadAll(stdout)
 	if err != nil {
-		fmt.Println("Stdin write error")
+		log.Println("stdin write error")
 		return "", err
 	}
 	return string(result), nil
@@ -103,12 +104,12 @@ func ExecuteFile(file string, tCase models.TestCase) (string, error) {
 func MustExecuteFile(file string, tCase models.TestCase) (string, error) {
 	ch := make(chan string)
 	errorCh := make(chan error)
-	
+
 	go func() {
 		if verdict, err := ExecuteFile(file, tCase); err == nil {
 			ch <- verdict
 		} else {
-			errorCh <-err
+			errorCh <- err
 		}
 	}()
 
@@ -118,6 +119,6 @@ func MustExecuteFile(file string, tCase models.TestCase) (string, error) {
 	case err := <-errorCh:
 		return "", err
 	case <-time.After(3 * time.Second):
-		return "", fmt.Errorf("Timeout") 
+		return "", fmt.Errorf("Timeout")
 	}
 }

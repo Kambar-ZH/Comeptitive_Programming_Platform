@@ -1,7 +1,7 @@
 package compiler
 
 import (
-	"fmt"
+	"log"
 	"site/grpc/api"
 	"site/internal/models"
 	"site/test/inmemory"
@@ -9,15 +9,15 @@ import (
 
 func PrepareExe(solutionFile, tempFile string) error {
 	if err := CopyFile(inmemory.GetInstance().MainSolution, solutionFile); err != nil {
-		fmt.Println("Error on writing to main solution")
+		log.Println("error on writing to main solution")
 		return err
 	}
 	if err := CopyFile(inmemory.GetInstance().ParticipantSolution, tempFile); err != nil {
-		fmt.Println("Error on writing to participant solution")
+		log.Println("error on writing to participant solution")
 		return err
 	}
 	if err := BuildExe(); err != nil {
-		fmt.Println("Error on making executable")
+		log.Println("error on making executable")
 		return err
 	}
 	return nil
@@ -36,21 +36,21 @@ func CleanUp() error {
 func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase) api.Verdict {
 	expected, err := MustExecuteFile(inmemory.GetInstance().MainSolutionExe, testCase)
 	if err != nil {
-		fmt.Println("Error on running main solution")
+		log.Println("error on running main solution")
 		return api.Verdict_UNKNOWN_ERROR
 	}
 	actual, err := MustExecuteFile(inmemory.GetInstance().ParticipantSolutionExe, testCase)
 	if err != nil {
-		fmt.Println("Error on running participant solution")
+		log.Println("error on running participant solution")
 		return api.Verdict_COMPILATION_ERROR
 	}
 
 	if expected != actual {
-		fmt.Printf("[%d] incorrect result on test::\nExpected: %s\nActual: %s\n", id, expected, actual)
+		log.Printf("[%d] incorrect result on test::\nExpected: %s\nActual: %s\n", id, expected, actual)
 		return api.Verdict_FAILED
 	}
 
-	fmt.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
+	log.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
 	return api.Verdict_PASSED
 }
 

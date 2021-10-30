@@ -173,7 +173,6 @@ func (s *Server) SubmissionCrud(r chi.Router) chi.Router {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-
 		render.JSON(w, r, submission)
 	})
 

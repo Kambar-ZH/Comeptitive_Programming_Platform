@@ -34,6 +34,7 @@ func (s *Server) Run() {
 	grpcServer := grpc.NewServer()
 
 	api.RegisterUserRepositoryServer(grpcServer, s.store.Users())
+	api.RegisterSubmissionRepositoryServer(grpcServer, s.store.Submissions())
 
 	log.Printf("Serving on %v", listener.Addr())
 	if err := grpcServer.Serve(listener); err != nil {

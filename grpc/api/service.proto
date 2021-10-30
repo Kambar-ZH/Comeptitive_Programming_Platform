@@ -60,7 +60,7 @@ message SubmissionResult {
   int32 failedTest = 2;
 }
 
-message Submission {
+message Submission {  
   int32 id = 1;
   string date = 2;
   int32 authorId = 3;

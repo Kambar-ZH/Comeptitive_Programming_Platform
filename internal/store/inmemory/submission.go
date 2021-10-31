@@ -3,7 +3,7 @@ package inmemory
 import (
 	"context"
 	"fmt"
-	"site/grpc/api"
+	"site/internal/grpc/api"
 	"sync"
 
 	"google.golang.org/grpc/codes"

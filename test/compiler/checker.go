@@ -2,7 +2,7 @@ package compiler
 
 import (
 	"log"
-	"site/grpc/api"
+	"site/internal/grpc/api"
 	"site/internal/models"
 	"site/test/inmemory"
 )

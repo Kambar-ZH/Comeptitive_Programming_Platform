@@ -3,19 +3,31 @@ package main
 import (
 	"context"
 	"log"
-	grpc_server "site/grpc/server"
+	"os"
+	"os/signal"
+	grpc_server "site/internal/grpc/server"
 	"site/internal/http"
 	"site/internal/store/inmemory"
+	"syscall"
 )
 
 func main() {
 
 	store := inmemory.NewDB()
 
-	gsrv := grpc_server.NewServer(context.Background(), ":8081", store)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cancel()
+	}()
+
+	gsrv := grpc_server.NewServer(ctx, ":8081", store)
 	go gsrv.Run()
 
-	srv := http.NewServer(context.Background(), ":8080", store)
+	srv := http.NewServer(ctx, ":8080", store)
 
 	if err := srv.Run(); err != nil {
 		log.Println(err)

@@ -3,12 +3,11 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
-	"site/grpc/api"
+	"site/internal/grpc/api"
 	"site/internal/store"
 	"site/test/compiler"
 	"site/test/inmemory"
@@ -18,7 +17,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 )
 
 type Server struct {
@@ -37,11 +35,22 @@ type ViewData struct {
 	FailedTest  int
 }
 
+func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
+	log.Println(err)
+	s.respond(w, r, code, map[string]string{"error": err.Error()})
+}
+
+func (s *Server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+	w.WriteHeader(code)
+	if data != nil {
+		json.NewEncoder(w).Encode(data)
+	}
+}
+
 func (s *Server) homePage(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles(inmemory.GetInstance().IndexHtml)
 	if err != nil {
-		fmt.Fprintf(w, "Error occured on loading home page")
-		log.Println(err)
+		s.error(w, r, http.StatusBadGateway, err)
 		return
 	}
 	data := ViewData{}
@@ -59,7 +68,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	file, handler, err := r.FormFile("myFile")
 	if err != nil {
-		log.Println("Error Retrieving the File")
+		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
 	defer file.Close()
@@ -68,15 +77,13 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	tempFile, err := ioutil.TempFile(inmemory.GetInstance().TempSolutions, "upload-*")
 	if err != nil {
-		log.Println("Error occured on creating temp file")
-		log.Println(err)
+		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Println("Error occured on reading file")
-		log.Println(err)
+		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -85,8 +92,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	problemId, err := strconv.Atoi(r.FormValue("problemId"))
 	if err != nil {
-		log.Println("Error on parsing problem id")
-		log.Println(err)
+		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
 	fileName := strings.ReplaceAll(tempFile.Name(), "\\\\", "/")
@@ -117,8 +123,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles(inmemory.GetInstance().UploadHtml)
 	if err != nil {
-		fmt.Fprintf(w, "Error occured on loading upload page")
-		log.Println(err)
+		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
 	tmpl.Execute(w, data)
@@ -137,75 +142,70 @@ func (s *Server) SubmissionCrud(r chi.Router) chi.Router {
 	r.Post("/submissions", func(w http.ResponseWriter, r *http.Request) {
 		submission := new(api.Submission)
 		if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 		submissionResult, err := s.store.Submissions().Create(r.Context(), submission)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
-		render.JSON(w, r, submissionResult)
+		s.respond(w, r, http.StatusCreated, submissionResult)
 	})
 
 	r.Get("/submissions", func(w http.ResponseWriter, r *http.Request) {
 		submissions, err := s.store.Submissions().All(r.Context(), &api.Empty{})
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, submissions)
+		s.respond(w, r, http.StatusOK, submissions)
 	})
 
 	r.Get("/submissions/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		submission, err := s.store.Submissions().ById(r.Context(), &api.SubmissionRequestId{Id: int32(id)})
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, submission)
+		s.respond(w, r, http.StatusOK, submission)
 	})
 
 	r.Put("/submissions", func(w http.ResponseWriter, r *http.Request) {
 		submission := new(api.Submission)
 		if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		submissionResult, err := s.store.Submissions().Update(r.Context(), submission)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-
-		w.WriteHeader(http.StatusAccepted)
-		render.JSON(w, r, submissionResult)
+		s.respond(w, r, http.StatusAccepted, submissionResult)
 	})
 
 	r.Delete("/submissions/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		if _, err = s.store.Submissions().Delete(r.Context(), &api.SubmissionRequestId{Id: int32(id)}); err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+		s.respond(w, r, http.StatusOK, "")
 	})
 
 	return r
@@ -215,74 +215,70 @@ func (s *Server) UserCrud(r chi.Router) chi.Router {
 	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {
 		user := new(api.User)
 		if err := json.NewDecoder(r.Body).Decode(user); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		userResult, err := s.store.Users().Create(r.Context(), user)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
-		render.JSON(w, r, userResult)
+		s.respond(w, r, http.StatusCreated, userResult)
 	})
 
 	r.Get("/users", func(w http.ResponseWriter, r *http.Request) {
 		users, err := s.store.Users().All(r.Context(), &api.Empty{})
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, users)
+		s.respond(w, r, http.StatusOK, users)
 	})
 
 	r.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		user, err := s.store.Users().ById(r.Context(), &api.UserRequestId{Id: int32(id)})
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, user)
+		s.respond(w, r, http.StatusOK, user)
 	})
 
 	r.Put("/users", func(w http.ResponseWriter, r *http.Request) {
 		user := new(api.User)
 		if err := json.NewDecoder(r.Body).Decode(user); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		userResult, err := s.store.Users().Update(r.Context(), user)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
-		render.JSON(w, r, userResult)
+		s.respond(w, r, http.StatusAccepted, userResult)
 	})
 
 	r.Delete("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		if _, err = s.store.Users().Delete(r.Context(), &api.UserRequestId{Id: int32(id)}); err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+		s.respond(w, r, http.StatusOK, "")
 	})
 
 	return r
@@ -310,7 +306,7 @@ func (s *Server) Run() error {
 
 	go s.ListenCtxForGT(srv)
 
-	log.Printf("Serving on %v", srv.Addr)
+	log.Printf("serving on %v", srv.Addr)
 	return srv.ListenAndServe()
 }
 
@@ -318,11 +314,11 @@ func (s *Server) ListenCtxForGT(srv *http.Server) {
 	<-s.ctx.Done() // blocked until context not canceled
 
 	if err := srv.Shutdown(context.Background()); err != nil {
-		log.Printf("Got error while shutting down %v", err)
+		log.Printf("got error while shutting down %v", err)
 		return
 	}
 
-	log.Println("Proccessed all idle connections")
+	log.Println("proccessed all idle connections")
 	close(s.idleConnsCh)
 }
 

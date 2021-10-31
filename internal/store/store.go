@@ -1,7 +1,7 @@
 package store
 
 import (
-	"site/grpc/api"
+	"site/internal/grpc/api"
 )
 
 type Store interface {

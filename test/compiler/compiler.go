@@ -15,7 +15,6 @@ func CopyFile(inFile, fromFile string) error {
 	fo, err := os.Create(inFile)
 	if err != nil {
 		log.Println("error on opening file")
-		log.Println(err)
 		return err
 	}
 
@@ -42,7 +41,6 @@ func BuildExe() error {
 	err := cmd.Run()
 	if err != nil {
 		log.Println("error: could not make file")
-		log.Println(err)
 		return err
 	}
 	return nil
@@ -119,6 +117,6 @@ func MustExecuteFile(file string, tCase models.TestCase) (string, error) {
 	case err := <-errorCh:
 		return "", err
 	case <-time.After(3 * time.Second):
-		return "", fmt.Errorf("Timeout")
+		return "", fmt.Errorf("server timeout")
 	}
 }

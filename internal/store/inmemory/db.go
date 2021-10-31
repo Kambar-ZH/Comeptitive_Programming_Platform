@@ -1,7 +1,7 @@
 package inmemory
 
 import (
-	"site/grpc/api"
+	"site/internal/grpc/api"
 	"site/internal/store"
 	"sync"
 )

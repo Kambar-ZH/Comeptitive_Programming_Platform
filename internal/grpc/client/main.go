@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"site/grpc/api"
+	"site/internal/grpc/api"
 	"log"
 
 	"google.golang.org/grpc"

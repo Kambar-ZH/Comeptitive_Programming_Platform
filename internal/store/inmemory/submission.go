@@ -16,7 +16,7 @@ type SubmissionRepo struct {
 	mu   *sync.RWMutex
 }
 
-func (db *SubmissionRepo) All(ctx context.Context, empty *api.Empty) (*api.SubmissionList, error) {
+func (db *SubmissionRepo) All(ctx context.Context, empty *api.Pagination) (*api.SubmissionList, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 

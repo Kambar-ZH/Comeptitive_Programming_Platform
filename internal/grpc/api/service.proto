@@ -4,39 +4,87 @@ option go_package = "example/api";
 package api;
 
 service UserRepository {
-  rpc All(Empty) returns (UserList);
-  rpc ById(UserRequestId) returns (User);
+  rpc All(Pagination) returns (UserList);
+  rpc ByEmail(UserRequestEmail) returns (User);
+  rpc ByHandle(UserRequestHandle) returns(User);
   rpc Create(User) returns (User);
   rpc Update(User) returns (User);
-  rpc Delete(UserRequestId) returns (Empty);
+  rpc Delete(UserRequestHandle) returns (Empty);
+}
+
+service SubmissionRepository {
+  rpc All(Pagination) returns (SubmissionList);
+  rpc ById(SubmissionRequestId) returns (Submission);
+  rpc ByAuthorHandle(SubmissionRequestHandle) returns (Submission);
+  rpc Create(Submission) returns (Submission);
+  rpc Update(Submission) returns (Submission);
+  rpc Delete(SubmissionRequestId) returns (Empty);
+}
+
+service RegistrationService {
+  rpc Validate(User) returns (Empty);
+  rpc Sanitize(User) returns (Empty);
+  rpc ComparePassword(User) returns (ComparePasswordResponse);
+  rpc BeforeCreate(User) returns (Empty);
+  rpc EncryptString(UnencryptedPassword) returns (EncryptedPassword);
+}
+
+message UnencryptedPassword {
+  string password = 1;
+}
+
+message EncryptedPassword {
+  string password = 1;
+}
+
+message ComparePasswordResponse {
+  bool isEqual = 1;
+}
+
+message Empty {}
+
+enum PHASE {
+  BEFORE = 0;
+  CODING = 1;
+  PENDING_SYSTEM_TEST = 2;
+  SYSTEM_TEST = 3;
+  FINISHED = 4;
+}
+
+message Contest {
+  int32 id = 1;
+  PHASE phase = 2;
+  string startTime = 3;
+  string duration = 4;
 }
 
 message UserList {
   repeated User users = 1;
 }
 
-message UserRequestId {
-  int32 id = 1;
+message UserRequestEmail {
+  string email = 1;
+}
+
+message UserRequestHandle {
+  string handle = 1;
 }
 
 message User {
-  int32 id = 1;
-  string handle = 2;
+  string handle = 1;
+  string email = 2;
   string country = 3;
   string city = 4;
   int32 rating = 5;
   int32 maxRating = 6;
   string avatar = 7;
+  string password = 8;
+  string encryptedPassword = 9;
 }
 
-message Empty {}
-
-service SubmissionRepository {
-  rpc All(Empty) returns (SubmissionList);
-  rpc ById(SubmissionRequestId) returns (Submission);
-  rpc Create(Submission) returns (Submission);
-  rpc Update(Submission) returns (Submission);
-  rpc Delete(SubmissionRequestId) returns (Empty);
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
 }
 
 message SubmissionList {
@@ -47,7 +95,11 @@ message SubmissionRequestId {
   int32 id = 1;
 }
 
-enum Verdict {
+message SubmissionRequestHandle {
+  string handle = 1;
+}
+
+enum VERDICT {
   PASSED = 0;
   FAILED = 1;
   COMPILATION_ERROR = 2;
@@ -56,14 +108,15 @@ enum Verdict {
 }
 
 message SubmissionResult {
-  Verdict verdict = 1;
+  VERDICT verdict = 1;
   int32 failedTest = 2;
 }
 
 message Submission {  
   int32 id = 1;
-  string date = 2;
-  int32 authorId = 3;
-  int32 problemId = 4;
-  SubmissionResult submissionResult = 5;
+  int32 contestId = 2;
+  string date = 3;
+  string authorHandle = 4;
+  int32 problemId = 5;
+  SubmissionResult submissionResult = 6;
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"site/internal/grpc/api"
+	"site/internal/services"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -11,12 +12,12 @@ import (
 )
 
 type UserRepo struct {
-	data map[int32]*api.User
+	data map[string]*api.User
 	api.UnimplementedUserRepositoryServer
 	mu *sync.RWMutex
 }
 
-func (db *UserRepo) All(ctx context.Context, empty *api.Empty) (*api.UserList, error) {
+func (db *UserRepo) All(ctx context.Context, empty *api.Pagination) (*api.UserList, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -29,38 +30,58 @@ func (db *UserRepo) All(ctx context.Context, empty *api.Empty) (*api.UserList, e
 	return &ans, nil
 }
 
-func (db *UserRepo) ById(ctx context.Context, user *api.UserRequestId) (*api.User, error) {
+func (db *UserRepo) ByHandle(ctx context.Context, req *api.UserRequestHandle) (*api.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	if user, ok := db.data[user.Id]; ok {
+	if user, ok := db.data[req.Handle]; ok {
 		return user, nil
 	}
 
-	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with id %d does not exist", user.Id))
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", req.Handle))
+}
+
+func (db *UserRepo) ByEmail(ctx context.Context, req *api.UserRequestEmail) (*api.User, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	for _, user := range db.data {
+		if user.Email == req.Email {
+			return user, nil
+		}
+	}
+
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with email %s does not exist", req.Email))
 }
 
 func (db *UserRepo) Create(ctx context.Context, user *api.User) (*api.User, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	db.data[user.Id] = user
+	if err := services.Validate(user); err != nil {
+		return nil, err
+	}
+
+	if err := services.BeforeCreate(user); err != nil {
+		return nil, err
+	}
+
+	db.data[user.Handle] = user
 	return user, nil
 }
 
 func (db *UserRepo) Update(ctx context.Context, user *api.User) (*api.User, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	db.data[user.Id] = user
+	db.data[user.Handle] = user
 
 	return user, nil
 }
 
-func (db *UserRepo) Delete(ctx context.Context, user *api.UserRequestId) (*api.Empty, error) {
+func (db *UserRepo) Delete(ctx context.Context, req *api.UserRequestHandle) (*api.Empty, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	if _, ok := db.data[user.Id]; !ok {
-		return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+	if _, ok := db.data[req.Handle]; !ok {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", req.Handle))
 	}
-	delete(db.data, user.Id)
+	delete(db.data, req.Handle)
 	return &api.Empty{}, nil
 }

@@ -17,41 +17,20 @@
       padding: 20px;
     }
 
-    input[type=text],
-    select {
-      width: 100%;
-      padding: 12px 20px;
-      margin: 8px 0;
-      display: inline-block;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    input[type=submit] {
-      width: 100%;
-      background-color: #4CAF50;
-      color: white;
-      padding: 14px 20px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
   </style>
 </head>
 
 <body>
   <div>
-    <h1>Successfully uploaded file {{ .FileName}} for the problem {{ .ProblemName}}</h1>
+    <p>File successfully uploaded. {{ .FileName}} for the problem {{ .ProblemName}}</p>
     {{if eq .Verdict 0}}
-    <h2>All tests passed successfully</h2>
+    <p>All tests passed successfully</p>
     {{else if eq .Verdict 1}}
-    <h2>Wrong answer on test {{ .FailedTest}}</h2>
+    <p>Wrong answer on test {{ .FailedTest}}</p>
     {{else if eq .Verdict 2}}
-    <h2>Compilation error</h2>
+    <p>Compilation error</p>
     {{else}}
-    <h2>Unknown error</h2>
+    <p>Unknown error</p>
     {{end}}
   </div>
 </body>

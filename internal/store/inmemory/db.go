@@ -22,7 +22,7 @@ func NewDB() store.Store {
 func (db *DB) Users() store.UserRepository {
 	if db.usersRepo == nil {
 		db.usersRepo = &UserRepo{
-			data: make(map[int32]*api.User),
+			data: make(map[string]*api.User),
 			mu:   &sync.RWMutex{},
 		}
 	}

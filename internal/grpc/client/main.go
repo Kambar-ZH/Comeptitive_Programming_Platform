@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"site/internal/grpc/api"
 	"log"
+	"site/internal/grpc/api"
 
 	"google.golang.org/grpc"
 )
@@ -14,7 +14,6 @@ const (
 
 func TestUser(ctx context.Context, userRepositoryClient api.UserRepositoryClient) {
 	newUser := &api.User{
-		Id:        1,
 		Handle:    "Kambar",
 		Country:   "Kazakhstan",
 		City:      "Atyrau",
@@ -29,26 +28,25 @@ func TestUser(ctx context.Context, userRepositoryClient api.UserRepositoryClient
 	}
 	log.Printf("user successfully created to db: %v", createResponseUser)
 
-	users, err := userRepositoryClient.All(ctx, &api.Empty{})
+	users, err := userRepositoryClient.All(ctx, &api.Pagination{})
 	if err != nil {
 		log.Fatalf("could not get users: %v", err)
 	}
 	log.Printf("got list of users: %v", users.Users)
 
-	validId, invalidId := int32(1), int32(3)
-	user, err := userRepositoryClient.ById(ctx, &api.UserRequestId{Id: validId})
+	validHandle, invalidHandle := "Kambar", "Rasul"
+	user, err := userRepositoryClient.ByHandle(ctx, &api.UserRequestHandle{Handle: validHandle})
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("got user with id %d: %v", validId, user)
+	log.Printf("got user with handle %s: %v", validHandle, user)
 
-	_, err = userRepositoryClient.ById(ctx, &api.UserRequestId{Id: invalidId})
+	_, err = userRepositoryClient.ByHandle(ctx, &api.UserRequestHandle{Handle: invalidHandle})
 	if err != nil {
 		log.Printf("got error: %v", err)
 	}
 
 	newUser = &api.User{
-		Id:        2,
 		Handle:    "Yergeldi",
 		Country:   "Kazakhstan",
 		City:      "Ust Kamenogorsk",
@@ -64,7 +62,6 @@ func TestUser(ctx context.Context, userRepositoryClient api.UserRepositoryClient
 	log.Printf("user successfully created to db: %v", createResponseUser)
 
 	updatedUser := &api.User{
-		Id:        1,
 		Handle:    "Aldiyar",
 		Country:   "Kazakhstan",
 		City:      "Atyrau",
@@ -78,20 +75,20 @@ func TestUser(ctx context.Context, userRepositoryClient api.UserRepositoryClient
 	}
 	log.Printf("user successfully updated: %v", updateResponseUser)
 
-	_, err = userRepositoryClient.Delete(ctx, &api.UserRequestId{Id: 1})
-	if err != nil {
-		log.Fatal(err)
-	}
+	// _, err = userRepositoryClient.Delete(ctx, &api.UserRequestId{Id: 1})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 }
 
 func TestSubmission(ctx context.Context, submissionRepositoryClient api.SubmissionRepositoryClient) {
 	newSubmission := &api.Submission{
-		Id: 1,
-		Date: "12.12.2021",            
-		AuthorId: 1,         
-		ProblemId: 1,     
+		Id:           1,
+		Date:         "12.12.2021",
+		AuthorHandle: "Kambar",
+		ProblemId:    1,
 		SubmissionResult: &api.SubmissionResult{
-			Verdict: api.Verdict_PASSED,
+			Verdict:    api.VERDICT_PASSED,
 			FailedTest: -1,
 		},
 	}
@@ -100,7 +97,7 @@ func TestSubmission(ctx context.Context, submissionRepositoryClient api.Submissi
 		log.Fatal(err)
 	}
 	log.Printf("submission successfully created to db: %v", createResponseSubmission)
-	submissions, err := submissionRepositoryClient.All(ctx, &api.Empty{})
+	submissions, err := submissionRepositoryClient.All(ctx, &api.Pagination{})
 	if err != nil {
 		log.Fatalf("could not get submissions: %v", err)
 	}
@@ -118,14 +115,13 @@ func TestSubmission(ctx context.Context, submissionRepositoryClient api.Submissi
 		log.Printf("got error: %v", err)
 	}
 
-
 	updatedSubmission := &api.Submission{
-		Id: 1,
-		Date: "13.12.2021",            
-		AuthorId: 1,         
-		ProblemId: 1,     
+		Id:           1,
+		Date:         "13.12.2021",
+		AuthorHandle: "Yergeldi",
+		ProblemId:    1,
 		SubmissionResult: &api.SubmissionResult{
-			Verdict: api.Verdict_FAILED,
+			Verdict:    api.VERDICT_FAILED,
 			FailedTest: 3,
 		},
 	}

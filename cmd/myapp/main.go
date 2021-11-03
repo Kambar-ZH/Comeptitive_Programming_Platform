@@ -9,6 +9,8 @@ import (
 	"site/internal/http"
 	"site/internal/store/inmemory"
 	"syscall"
+
+	"github.com/gorilla/sessions"
 )
 
 func main() {
@@ -27,12 +29,12 @@ func main() {
 	gsrv := grpc_server.NewServer(ctx, ":8081", store)
 	go gsrv.Run()
 
-	srv := http.NewServer(ctx, ":8080", store)
+	sessionStore := sessions.NewCookieStore([]byte("secret"))
+	srv := http.NewServer(ctx, ":8080", store, sessionStore)
 
 	if err := srv.Run(); err != nil {
 		log.Println(err)
 	}
 
 	srv.WaitForGracefulTermination()
-
 }

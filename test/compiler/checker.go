@@ -8,11 +8,11 @@ import (
 )
 
 func PrepareExe(solutionFile, tempFile string) error {
-	if err := CopyFile(inmemory.GetInstance().MainSolution, solutionFile); err != nil {
+	if err := CopyFile(inmemory.GetInstance().GetMainSolution(), solutionFile); err != nil {
 		log.Println("error on writing to main solution")
 		return err
 	}
-	if err := CopyFile(inmemory.GetInstance().ParticipantSolution, tempFile); err != nil {
+	if err := CopyFile(inmemory.GetInstance().GetParticipantSolution(), tempFile); err != nil {
 		log.Println("error on writing to participant solution")
 		return err
 	}
@@ -24,52 +24,52 @@ func PrepareExe(solutionFile, tempFile string) error {
 }
 
 func CleanUp() error {
-	if err := CopyFile(inmemory.GetInstance().ParticipantSolution, inmemory.GetInstance().CleanFile); err != nil {
+	if err := CopyFile(inmemory.GetInstance().GetParticipantSolution(), inmemory.GetInstance().GetCleanFile()); err != nil {
 		return err
 	}
-	if err := CopyFile(inmemory.GetInstance().MainSolution, inmemory.GetInstance().CleanFile); err != nil {
+	if err := CopyFile(inmemory.GetInstance().GetMainSolution(), inmemory.GetInstance().GetCleanFile()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase) api.Verdict {
-	expected, err := MustExecuteFile(inmemory.GetInstance().MainSolutionExe, testCase)
+func RunTestCase(solutionFile, tempFile string, id int, testCase models.TestCase) api.VERDICT {
+	expected, err := MustExecuteFile(inmemory.GetInstance().GetMainSolutionExe(), testCase)
 	if err != nil {
 		log.Println("error on running main solution")
-		return api.Verdict_UNKNOWN_ERROR
+		return api.VERDICT_UNKNOWN_ERROR
 	}
-	actual, err := MustExecuteFile(inmemory.GetInstance().ParticipantSolutionExe, testCase)
+	actual, err := MustExecuteFile(inmemory.GetInstance().GetParticipantSolutionExe(), testCase)
 	if err != nil {
 		log.Println("error on running participant solution")
-		return api.Verdict_COMPILATION_ERROR
+		return api.VERDICT_COMPILATION_ERROR
 	}
 
 	if expected != actual {
 		log.Printf("[%d] incorrect result on test::\nExpected: %s\nActual: %s\n", id, expected, actual)
-		return api.Verdict_FAILED
+		return api.VERDICT_FAILED
 	}
 
 	log.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
-	return api.Verdict_PASSED
+	return api.VERDICT_PASSED
 }
 
 func TestSolution(tempFile string, problemId int) *api.SubmissionResult {
 	test, err := inmemory.GetInstance().GetTestByID(problemId)
 	if err != nil {
 		return &api.SubmissionResult{
-			Verdict: api.Verdict_UNKNOWN_ERROR,
+			Verdict: api.VERDICT_UNKNOWN_ERROR,
 		}
 	}
 	if err := PrepareExe(test.SolutionFile, tempFile); err != nil {
 		return &api.SubmissionResult{
-			Verdict: api.Verdict_COMPILATION_ERROR,
+			Verdict: api.VERDICT_COMPILATION_ERROR,
 		}
 	}
 	defer CleanUp()
 	for id, testCase := range test.TestCases {
 		verdict := RunTestCase(test.SolutionFile, tempFile, id+1, testCase)
-		if verdict != api.Verdict_PASSED {
+		if verdict != api.VERDICT_PASSED {
 			return &api.SubmissionResult{
 				Verdict:    verdict,
 				FailedTest: int32(testCase.Id + 1),
@@ -77,6 +77,6 @@ func TestSolution(tempFile string, problemId int) *api.SubmissionResult {
 		}
 	}
 	return &api.SubmissionResult{
-		Verdict: api.Verdict_PASSED,
+		Verdict: api.VERDICT_PASSED,
 	}
 }

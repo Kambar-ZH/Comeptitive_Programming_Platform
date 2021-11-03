@@ -6,27 +6,63 @@ import (
 )
 
 var (
-	filesSystem *FileSystem = nil
+	fileSystem *FileSystem = nil
 )
 
 type FileSystem struct {
-	IndexHtml              string
-	UploadHtml             string
-	TempSolutions          string
-	ParticipantSolution    string
-	ParticipantSolutionExe string
-	MainSolution           string
-	MainSolutionExe        string
-	CleanFile              string
 	Tests                  map[int]models.Validator
 }
 
-func (lf *FileSystem) GetTestByID(id int) (*models.Validator, error) {
-	validator, ok := filesSystem.Tests[id]
+func (fs *FileSystem) GetTestByID(id int) (*models.Validator, error) {
+	validator, ok := fs.Tests[id]
 	if !ok {
 		return nil, fmt.Errorf("problem with this id not found")
 	}
 	return &validator, nil
+}
+func (fs *FileSystem) GetRegisterHtml() string {
+	relativePath := "web/template/register.html"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetLoginHtml() string {
+	relativePath := "web/template/login.html"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetIndexHtml() string {
+	relativePath := "web/template/index.html"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetUploadHtml() string {
+	relativePath := "web/template/upload.html"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetRatingsHtml() string {
+	relativePath := "web/template/ratings.html"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetTempSolutions() string {
+	relativePath := "temp_solutions"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetParticipantSolution() string {
+	relativePath := "cmd/myapp/participant_solution/participant_solution.go"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetParticipantSolutionExe() string {
+	relativePath := "cmd/myapp/participant_solution/participant_solution.exe"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetMainSolution() string {
+	relativePath := "cmd/myapp/main_solution/main_solution.go"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetMainSolutionExe() string {
+	relativePath := "cmd/myapp/main_solution/main_solution.exe"
+	return absolutePath(relativePath)
+}
+func (fs *FileSystem) GetCleanFile() string {
+	relativePath := "cmd/myapp/main_solution/clean.txt"
+	return absolutePath(relativePath)
 }
 
 func absolutePath(relativePath string) string {
@@ -34,16 +70,8 @@ func absolutePath(relativePath string) string {
 }
 
 func GetInstance() *FileSystem {
-	if filesSystem == nil {
-		filesSystem = &FileSystem{
-			IndexHtml:              absolutePath("web/template/index.html"),
-			UploadHtml:             absolutePath("web/template/upload.html"),
-			TempSolutions:          absolutePath("temp_solutions"),
-			ParticipantSolution:    absolutePath("cmd/myapp/participant_solution/participant_solution.go"),
-			ParticipantSolutionExe: absolutePath("cmd/myapp/participant_solution/participant_solution.exe"),
-			MainSolution:           absolutePath("cmd/myapp/main_solution/main_solution.go"),
-			MainSolutionExe:        absolutePath("cmd/myapp/main_solution/main_solution.exe"),
-			CleanFile:              absolutePath("cmd/myapp/main_solution/clean.txt"),
+	if fileSystem == nil {
+		fileSystem = &FileSystem{
 			Tests: map[int]models.Validator{
 				1: {
 					ProblemId:    1,
@@ -72,5 +100,5 @@ func GetInstance() *FileSystem {
 			},
 		}
 	}
-	return filesSystem
+	return fileSystem
 }

@@ -7,14 +7,22 @@ import (
 	"net/http"
 	"site/internal/grpc/api"
 	"site/internal/http/ioutils"
-	"site/internal/store"
+	"site/internal/services"
 	"strconv"
 
 	"github.com/go-chi/chi"
 )
 
 type SubmissionHandler struct {
-	Repository store.SubmissionRepository
+	service services.SubmissionService
+}
+
+func NewSubmissionService(opts ...SubmissionHandlerOption) *SubmissionHandler {
+	sh := &SubmissionHandler{}
+	for _, v := range opts {
+		v(sh)
+	}
+	return sh
 }
 
 func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +32,7 @@ func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	submissionResult, err := sh.Repository.Create(r.Context(), submission)
+	submissionResult, err := sh.service.Create(r.Context(), submission)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -33,7 +41,11 @@ func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
-	submissions, err := sh.Repository.All(r.Context(), &api.Pagination{})
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		ioutils.Error(w, r, http.StatusBadRequest, err)
+	}
+	submissions, err := sh.service.All(r.Context(), &api.AllSubmissionsRequest{Page: int32(page)})
 	if err != nil {
 		log.Println(err)
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
@@ -54,13 +66,9 @@ func (sh *SubmissionHandler) ById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ioutils.Error(w, r, http.StatusBadRequest, err)
 	}
-	submission, err := sh.Repository.ById(r.Context(), &api.SubmissionRequestId{Id: int32(id)})
+	submission, err := sh.service.ById(r.Context(), &api.SubmissionByIdRequest{Id: int32(id)})
 	if err != nil {
 		ioutils.Error(w, r, http.StatusNotFound, err)
-		return
-	}
-	if submission.ContestId != int32(contestId) {
-		ioutils.Error(w, r, http.StatusMethodNotAllowed, fmt.Errorf("page preview not allowed"))
 		return
 	}
 	ioutils.Respond(w, r, http.StatusOK, submission)
@@ -82,7 +90,7 @@ func (sh *SubmissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	submissionResult, err := sh.Repository.Update(r.Context(), submission)
+	submissionResult, err := sh.service.Update(r.Context(), submission)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -102,7 +110,7 @@ func (sh *SubmissionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	submission, err := sh.Repository.ById(r.Context(), &api.SubmissionRequestId{Id: int32(id)})
+	submission, err := sh.service.ById(r.Context(), int32(id))
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -112,7 +120,7 @@ func (sh *SubmissionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = sh.Repository.Delete(r.Context(), &api.SubmissionRequestId{Id: int32(id)}); err != nil {
+	if _, err = sh.service.Delete(r.Context(), int32(id)); err != nil {
 		ioutils.Error(w, r, http.StatusNotFound, err)
 		return
 	}

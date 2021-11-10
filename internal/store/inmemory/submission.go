@@ -16,7 +16,7 @@ type SubmissionRepo struct {
 	mu   *sync.RWMutex
 }
 
-func (db *SubmissionRepo) All(ctx context.Context, empty *api.Pagination) (*api.SubmissionList, error) {
+func (db *SubmissionRepo) All(ctx context.Context, empty *api.AllSubmissionsRequest) (*api.SubmissionList, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -29,7 +29,7 @@ func (db *SubmissionRepo) All(ctx context.Context, empty *api.Pagination) (*api.
 	return &ans, nil
 }
 
-func (db *SubmissionRepo) ById(ctx context.Context, submission *api.SubmissionRequestId) (*api.Submission, error) {
+func (db *SubmissionRepo) ById(ctx context.Context, submission *api.SubmissionByIdRequest) (*api.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	if submission, ok := db.data[submission.Id]; ok {
@@ -55,7 +55,7 @@ func (db *SubmissionRepo) Update(ctx context.Context, submission *api.Submission
 	return submission, nil
 }
 
-func (db *SubmissionRepo) Delete(ctx context.Context, submission *api.SubmissionRequestId) (*api.Empty, error) {
+func (db *SubmissionRepo) Delete(ctx context.Context, submission *api.DeleteSubmissionRequest) (*api.Empty, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	if _, ok := db.data[submission.Id]; !ok {

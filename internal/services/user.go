@@ -1,45 +1,74 @@
 package services
 
 import (
+	"context"
 	"site/internal/grpc/api"
-
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
-	"golang.org/x/crypto/bcrypt"
+	"site/internal/store"
 )
 
-func Validate(user *api.User) error {
-	return validation.ValidateStruct(
-		user,
-		validation.Field(&user.Email, validation.Required, is.Email),
-		validation.Field(&user.Password, validation.By(requiredIf(user.EncryptedPassword == "")), validation.Length(6, 100)),
-	)
+const (
+	usersLimitPerPage = 20
+)
+
+type UserService interface {
+	All(ctx context.Context, req *api.AllUserRequest) (*api.UserList, error)
+	ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error)
+	ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) 
+	Create(ctx context.Context, user *api.User) (*api.User, error) 
+	Update(ctx context.Context, user *api.User) (*api.User, error)
+	Delete(ctx context.Context, user *api.DeleteUserRequest) (*api.Empty, error)
 }
 
-func Sanitize(user *api.User) {
-	user.Password = ""
+type UserServiceImpl struct {
+	repo store.UserRepository
 }
 
-func ComparePassword(user *api.User, password string) bool {
-	result := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)) == nil
-	return result
-}
-
-func BeforeCreate(user *api.User) error {
-	if len(user.Password) > 0 {
-		encPassword, err := EncryptString(&api.UnencryptedPassword{Password: user.Password})
-		if err != nil {
-			return err
-		}
-		user.EncryptedPassword = encPassword
+func NewUserService(opts ...UserServiceOption) UserService {
+	svc := &UserServiceImpl{}
+	for _, v := range(opts) {
+		v(svc)
 	}
-	return nil
+	return svc
 }
 
-func EncryptString(unEncpassword *api.UnencryptedPassword) (string, error) {
-	encPassword, err := bcrypt.GenerateFromPassword([]byte(unEncpassword.Password), bcrypt.MinCost)
+func (u UserServiceImpl) All(ctx context.Context, req *api.AllUserRequest) (*api.UserList, error) {
+	req.Limit = usersLimitPerPage
+
+	return u.repo.All(ctx, req)
+}
+
+func (u UserServiceImpl) ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error) {
+	return u.repo.ByEmail(ctx, req)
+}
+
+func (u UserServiceImpl) ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) {
+	return u.repo.ByHandle(ctx, req)
+}
+
+func (u UserServiceImpl) Create(ctx context.Context, user *api.User) (*api.User, error) {
+	return u.repo.Create(ctx, user)
+}
+
+func (u UserServiceImpl) Update(ctx context.Context, user *api.User) (*api.User, error) {
+	// TODO: add admin permission
+	req := &api.UserByHandleRequest{
+		Handle: user.Handle,
+	}
+	_, err := u.repo.ByHandle(ctx, req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(encPassword), nil
+	return u.repo.Update(ctx, user)
+}
+
+func (u UserServiceImpl) Delete(ctx context.Context, user *api.DeleteUserRequest) (*api.Empty, error) {
+	// TODO: add admin permission
+	req := &api.UserByHandleRequest{
+		Handle: user.Handle,
+	}
+	_, err := u.repo.ByHandle(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return u.repo.Delete(ctx, user)
 }

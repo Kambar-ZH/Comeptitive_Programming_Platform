@@ -17,7 +17,7 @@ type UserRepo struct {
 	mu *sync.RWMutex
 }
 
-func (db *UserRepo) All(ctx context.Context, empty *api.Pagination) (*api.UserList, error) {
+func (db *UserRepo) All(ctx context.Context, empty *api.AllUserRequest) (*api.UserList, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -30,7 +30,7 @@ func (db *UserRepo) All(ctx context.Context, empty *api.Pagination) (*api.UserLi
 	return &ans, nil
 }
 
-func (db *UserRepo) ByHandle(ctx context.Context, req *api.UserRequestHandle) (*api.User, error) {
+func (db *UserRepo) ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	if user, ok := db.data[req.Handle]; ok {
@@ -40,7 +40,7 @@ func (db *UserRepo) ByHandle(ctx context.Context, req *api.UserRequestHandle) (*
 	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", req.Handle))
 }
 
-func (db *UserRepo) ByEmail(ctx context.Context, req *api.UserRequestEmail) (*api.User, error) {
+func (db *UserRepo) ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	for _, user := range db.data {
@@ -76,7 +76,7 @@ func (db *UserRepo) Update(ctx context.Context, user *api.User) (*api.User, erro
 	return user, nil
 }
 
-func (db *UserRepo) Delete(ctx context.Context, req *api.UserRequestHandle) (*api.Empty, error) {
+func (db *UserRepo) Delete(ctx context.Context, req *api.DeleteUserRequest) (*api.Empty, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	if _, ok := db.data[req.Handle]; !ok {

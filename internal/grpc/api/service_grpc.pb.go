@@ -14,282 +14,16 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// UserRepositoryClient is the client API for UserRepository service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserRepositoryClient interface {
-	All(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*UserList, error)
-	ByEmail(ctx context.Context, in *UserRequestEmail, opts ...grpc.CallOption) (*User, error)
-	ByHandle(ctx context.Context, in *UserRequestHandle, opts ...grpc.CallOption) (*User, error)
-	Create(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	Update(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	Delete(ctx context.Context, in *UserRequestHandle, opts ...grpc.CallOption) (*Empty, error)
-}
-
-type userRepositoryClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewUserRepositoryClient(cc grpc.ClientConnInterface) UserRepositoryClient {
-	return &userRepositoryClient{cc}
-}
-
-func (c *userRepositoryClient) All(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*UserList, error) {
-	out := new(UserList)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/All", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userRepositoryClient) ByEmail(ctx context.Context, in *UserRequestEmail, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/ByEmail", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userRepositoryClient) ByHandle(ctx context.Context, in *UserRequestHandle, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/ByHandle", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userRepositoryClient) Create(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/Create", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userRepositoryClient) Update(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/Update", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userRepositoryClient) Delete(ctx context.Context, in *UserRequestHandle, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/api.UserRepository/Delete", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// UserRepositoryServer is the server API for UserRepository service.
-// All implementations must embed UnimplementedUserRepositoryServer
-// for forward compatibility
-type UserRepositoryServer interface {
-	All(context.Context, *Pagination) (*UserList, error)
-	ByEmail(context.Context, *UserRequestEmail) (*User, error)
-	ByHandle(context.Context, *UserRequestHandle) (*User, error)
-	Create(context.Context, *User) (*User, error)
-	Update(context.Context, *User) (*User, error)
-	Delete(context.Context, *UserRequestHandle) (*Empty, error)
-	mustEmbedUnimplementedUserRepositoryServer()
-}
-
-// UnimplementedUserRepositoryServer must be embedded to have forward compatible implementations.
-type UnimplementedUserRepositoryServer struct {
-}
-
-func (UnimplementedUserRepositoryServer) All(context.Context, *Pagination) (*UserList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method All not implemented")
-}
-func (UnimplementedUserRepositoryServer) ByEmail(context.Context, *UserRequestEmail) (*User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ByEmail not implemented")
-}
-func (UnimplementedUserRepositoryServer) ByHandle(context.Context, *UserRequestHandle) (*User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ByHandle not implemented")
-}
-func (UnimplementedUserRepositoryServer) Create(context.Context, *User) (*User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
-}
-func (UnimplementedUserRepositoryServer) Update(context.Context, *User) (*User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
-}
-func (UnimplementedUserRepositoryServer) Delete(context.Context, *UserRequestHandle) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
-}
-func (UnimplementedUserRepositoryServer) mustEmbedUnimplementedUserRepositoryServer() {}
-
-// UnsafeUserRepositoryServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserRepositoryServer will
-// result in compilation errors.
-type UnsafeUserRepositoryServer interface {
-	mustEmbedUnimplementedUserRepositoryServer()
-}
-
-func RegisterUserRepositoryServer(s grpc.ServiceRegistrar, srv UserRepositoryServer) {
-	s.RegisterService(&UserRepository_ServiceDesc, srv)
-}
-
-func _UserRepository_All_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Pagination)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).All(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/All",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).All(ctx, req.(*Pagination))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserRepository_ByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserRequestEmail)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).ByEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/ByEmail",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).ByEmail(ctx, req.(*UserRequestEmail))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserRepository_ByHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserRequestHandle)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).ByHandle(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/ByHandle",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).ByHandle(ctx, req.(*UserRequestHandle))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserRepository_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).Create(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/Create",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).Create(ctx, req.(*User))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserRepository_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).Update(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/Update",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).Update(ctx, req.(*User))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserRepository_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserRequestHandle)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserRepositoryServer).Delete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.UserRepository/Delete",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserRepositoryServer).Delete(ctx, req.(*UserRequestHandle))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// UserRepository_ServiceDesc is the grpc.ServiceDesc for UserRepository service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var UserRepository_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.UserRepository",
-	HandlerType: (*UserRepositoryServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "All",
-			Handler:    _UserRepository_All_Handler,
-		},
-		{
-			MethodName: "ByEmail",
-			Handler:    _UserRepository_ByEmail_Handler,
-		},
-		{
-			MethodName: "ByHandle",
-			Handler:    _UserRepository_ByHandle_Handler,
-		},
-		{
-			MethodName: "Create",
-			Handler:    _UserRepository_Create_Handler,
-		},
-		{
-			MethodName: "Update",
-			Handler:    _UserRepository_Update_Handler,
-		},
-		{
-			MethodName: "Delete",
-			Handler:    _UserRepository_Delete_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "internal/grpc/api/service.proto",
-}
-
 // SubmissionRepositoryClient is the client API for SubmissionRepository service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SubmissionRepositoryClient interface {
-	All(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*SubmissionList, error)
-	ById(ctx context.Context, in *SubmissionRequestId, opts ...grpc.CallOption) (*Submission, error)
-	ByAuthorHandle(ctx context.Context, in *SubmissionRequestHandle, opts ...grpc.CallOption) (*Submission, error)
+	All(ctx context.Context, in *AllSubmissionsRequest, opts ...grpc.CallOption) (*SubmissionList, error)
+	ById(ctx context.Context, in *SubmissionByIdRequest, opts ...grpc.CallOption) (*Submission, error)
+	ByAuthorHandle(ctx context.Context, in *SubmissionByHandleRequest, opts ...grpc.CallOption) (*Submission, error)
 	Create(ctx context.Context, in *Submission, opts ...grpc.CallOption) (*Submission, error)
 	Update(ctx context.Context, in *Submission, opts ...grpc.CallOption) (*Submission, error)
-	Delete(ctx context.Context, in *SubmissionRequestId, opts ...grpc.CallOption) (*Empty, error)
+	Delete(ctx context.Context, in *DeleteSubmissionRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type submissionRepositoryClient struct {
@@ -300,7 +34,7 @@ func NewSubmissionRepositoryClient(cc grpc.ClientConnInterface) SubmissionReposi
 	return &submissionRepositoryClient{cc}
 }
 
-func (c *submissionRepositoryClient) All(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*SubmissionList, error) {
+func (c *submissionRepositoryClient) All(ctx context.Context, in *AllSubmissionsRequest, opts ...grpc.CallOption) (*SubmissionList, error) {
 	out := new(SubmissionList)
 	err := c.cc.Invoke(ctx, "/api.SubmissionRepository/All", in, out, opts...)
 	if err != nil {
@@ -309,7 +43,7 @@ func (c *submissionRepositoryClient) All(ctx context.Context, in *Pagination, op
 	return out, nil
 }
 
-func (c *submissionRepositoryClient) ById(ctx context.Context, in *SubmissionRequestId, opts ...grpc.CallOption) (*Submission, error) {
+func (c *submissionRepositoryClient) ById(ctx context.Context, in *SubmissionByIdRequest, opts ...grpc.CallOption) (*Submission, error) {
 	out := new(Submission)
 	err := c.cc.Invoke(ctx, "/api.SubmissionRepository/ById", in, out, opts...)
 	if err != nil {
@@ -318,7 +52,7 @@ func (c *submissionRepositoryClient) ById(ctx context.Context, in *SubmissionReq
 	return out, nil
 }
 
-func (c *submissionRepositoryClient) ByAuthorHandle(ctx context.Context, in *SubmissionRequestHandle, opts ...grpc.CallOption) (*Submission, error) {
+func (c *submissionRepositoryClient) ByAuthorHandle(ctx context.Context, in *SubmissionByHandleRequest, opts ...grpc.CallOption) (*Submission, error) {
 	out := new(Submission)
 	err := c.cc.Invoke(ctx, "/api.SubmissionRepository/ByAuthorHandle", in, out, opts...)
 	if err != nil {
@@ -345,7 +79,7 @@ func (c *submissionRepositoryClient) Update(ctx context.Context, in *Submission,
 	return out, nil
 }
 
-func (c *submissionRepositoryClient) Delete(ctx context.Context, in *SubmissionRequestId, opts ...grpc.CallOption) (*Empty, error) {
+func (c *submissionRepositoryClient) Delete(ctx context.Context, in *DeleteSubmissionRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/api.SubmissionRepository/Delete", in, out, opts...)
 	if err != nil {
@@ -358,12 +92,12 @@ func (c *submissionRepositoryClient) Delete(ctx context.Context, in *SubmissionR
 // All implementations must embed UnimplementedSubmissionRepositoryServer
 // for forward compatibility
 type SubmissionRepositoryServer interface {
-	All(context.Context, *Pagination) (*SubmissionList, error)
-	ById(context.Context, *SubmissionRequestId) (*Submission, error)
-	ByAuthorHandle(context.Context, *SubmissionRequestHandle) (*Submission, error)
+	All(context.Context, *AllSubmissionsRequest) (*SubmissionList, error)
+	ById(context.Context, *SubmissionByIdRequest) (*Submission, error)
+	ByAuthorHandle(context.Context, *SubmissionByHandleRequest) (*Submission, error)
 	Create(context.Context, *Submission) (*Submission, error)
 	Update(context.Context, *Submission) (*Submission, error)
-	Delete(context.Context, *SubmissionRequestId) (*Empty, error)
+	Delete(context.Context, *DeleteSubmissionRequest) (*Empty, error)
 	mustEmbedUnimplementedSubmissionRepositoryServer()
 }
 
@@ -371,13 +105,13 @@ type SubmissionRepositoryServer interface {
 type UnimplementedSubmissionRepositoryServer struct {
 }
 
-func (UnimplementedSubmissionRepositoryServer) All(context.Context, *Pagination) (*SubmissionList, error) {
+func (UnimplementedSubmissionRepositoryServer) All(context.Context, *AllSubmissionsRequest) (*SubmissionList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method All not implemented")
 }
-func (UnimplementedSubmissionRepositoryServer) ById(context.Context, *SubmissionRequestId) (*Submission, error) {
+func (UnimplementedSubmissionRepositoryServer) ById(context.Context, *SubmissionByIdRequest) (*Submission, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ById not implemented")
 }
-func (UnimplementedSubmissionRepositoryServer) ByAuthorHandle(context.Context, *SubmissionRequestHandle) (*Submission, error) {
+func (UnimplementedSubmissionRepositoryServer) ByAuthorHandle(context.Context, *SubmissionByHandleRequest) (*Submission, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ByAuthorHandle not implemented")
 }
 func (UnimplementedSubmissionRepositoryServer) Create(context.Context, *Submission) (*Submission, error) {
@@ -386,7 +120,7 @@ func (UnimplementedSubmissionRepositoryServer) Create(context.Context, *Submissi
 func (UnimplementedSubmissionRepositoryServer) Update(context.Context, *Submission) (*Submission, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedSubmissionRepositoryServer) Delete(context.Context, *SubmissionRequestId) (*Empty, error) {
+func (UnimplementedSubmissionRepositoryServer) Delete(context.Context, *DeleteSubmissionRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedSubmissionRepositoryServer) mustEmbedUnimplementedSubmissionRepositoryServer() {}
@@ -403,7 +137,7 @@ func RegisterSubmissionRepositoryServer(s grpc.ServiceRegistrar, srv SubmissionR
 }
 
 func _SubmissionRepository_All_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Pagination)
+	in := new(AllSubmissionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -415,13 +149,13 @@ func _SubmissionRepository_All_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/api.SubmissionRepository/All",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubmissionRepositoryServer).All(ctx, req.(*Pagination))
+		return srv.(SubmissionRepositoryServer).All(ctx, req.(*AllSubmissionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _SubmissionRepository_ById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SubmissionRequestId)
+	in := new(SubmissionByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -433,13 +167,13 @@ func _SubmissionRepository_ById_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: "/api.SubmissionRepository/ById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubmissionRepositoryServer).ById(ctx, req.(*SubmissionRequestId))
+		return srv.(SubmissionRepositoryServer).ById(ctx, req.(*SubmissionByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _SubmissionRepository_ByAuthorHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SubmissionRequestHandle)
+	in := new(SubmissionByHandleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -451,7 +185,7 @@ func _SubmissionRepository_ByAuthorHandle_Handler(srv interface{}, ctx context.C
 		FullMethod: "/api.SubmissionRepository/ByAuthorHandle",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubmissionRepositoryServer).ByAuthorHandle(ctx, req.(*SubmissionRequestHandle))
+		return srv.(SubmissionRepositoryServer).ByAuthorHandle(ctx, req.(*SubmissionByHandleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -493,7 +227,7 @@ func _SubmissionRepository_Update_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _SubmissionRepository_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SubmissionRequestId)
+	in := new(DeleteSubmissionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -505,7 +239,7 @@ func _SubmissionRepository_Delete_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/api.SubmissionRepository/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubmissionRepositoryServer).Delete(ctx, req.(*SubmissionRequestId))
+		return srv.(SubmissionRepositoryServer).Delete(ctx, req.(*DeleteSubmissionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -554,7 +288,7 @@ type RegistrationServiceClient interface {
 	Sanitize(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error)
 	ComparePassword(ctx context.Context, in *User, opts ...grpc.CallOption) (*ComparePasswordResponse, error)
 	BeforeCreate(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error)
-	EncryptString(ctx context.Context, in *UnencryptedPassword, opts ...grpc.CallOption) (*EncryptedPassword, error)
+	EncryptPassword(ctx context.Context, in *EncryptPasswordRequest, opts ...grpc.CallOption) (*EncryptPasswordResponse, error)
 }
 
 type registrationServiceClient struct {
@@ -601,9 +335,9 @@ func (c *registrationServiceClient) BeforeCreate(ctx context.Context, in *User, 
 	return out, nil
 }
 
-func (c *registrationServiceClient) EncryptString(ctx context.Context, in *UnencryptedPassword, opts ...grpc.CallOption) (*EncryptedPassword, error) {
-	out := new(EncryptedPassword)
-	err := c.cc.Invoke(ctx, "/api.RegistrationService/EncryptString", in, out, opts...)
+func (c *registrationServiceClient) EncryptPassword(ctx context.Context, in *EncryptPasswordRequest, opts ...grpc.CallOption) (*EncryptPasswordResponse, error) {
+	out := new(EncryptPasswordResponse)
+	err := c.cc.Invoke(ctx, "/api.RegistrationService/EncryptPassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +352,7 @@ type RegistrationServiceServer interface {
 	Sanitize(context.Context, *User) (*Empty, error)
 	ComparePassword(context.Context, *User) (*ComparePasswordResponse, error)
 	BeforeCreate(context.Context, *User) (*Empty, error)
-	EncryptString(context.Context, *UnencryptedPassword) (*EncryptedPassword, error)
+	EncryptPassword(context.Context, *EncryptPasswordRequest) (*EncryptPasswordResponse, error)
 	mustEmbedUnimplementedRegistrationServiceServer()
 }
 
@@ -638,8 +372,8 @@ func (UnimplementedRegistrationServiceServer) ComparePassword(context.Context, *
 func (UnimplementedRegistrationServiceServer) BeforeCreate(context.Context, *User) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BeforeCreate not implemented")
 }
-func (UnimplementedRegistrationServiceServer) EncryptString(context.Context, *UnencryptedPassword) (*EncryptedPassword, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method EncryptString not implemented")
+func (UnimplementedRegistrationServiceServer) EncryptPassword(context.Context, *EncryptPasswordRequest) (*EncryptPasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EncryptPassword not implemented")
 }
 func (UnimplementedRegistrationServiceServer) mustEmbedUnimplementedRegistrationServiceServer() {}
 
@@ -726,20 +460,20 @@ func _RegistrationService_BeforeCreate_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RegistrationService_EncryptString_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnencryptedPassword)
+func _RegistrationService_EncryptPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncryptPasswordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistrationServiceServer).EncryptString(ctx, in)
+		return srv.(RegistrationServiceServer).EncryptPassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.RegistrationService/EncryptString",
+		FullMethod: "/api.RegistrationService/EncryptPassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistrationServiceServer).EncryptString(ctx, req.(*UnencryptedPassword))
+		return srv.(RegistrationServiceServer).EncryptPassword(ctx, req.(*EncryptPasswordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -768,8 +502,274 @@ var RegistrationService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RegistrationService_BeforeCreate_Handler,
 		},
 		{
-			MethodName: "EncryptString",
-			Handler:    _RegistrationService_EncryptString_Handler,
+			MethodName: "EncryptPassword",
+			Handler:    _RegistrationService_EncryptPassword_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "internal/grpc/api/service.proto",
+}
+
+// UserRepositoryClient is the client API for UserRepository service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type UserRepositoryClient interface {
+	All(ctx context.Context, in *AllUserRequest, opts ...grpc.CallOption) (*UserList, error)
+	ByEmail(ctx context.Context, in *UserByEmailRequest, opts ...grpc.CallOption) (*User, error)
+	ByHandle(ctx context.Context, in *UserByHandleRequest, opts ...grpc.CallOption) (*User, error)
+	Create(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	Update(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type userRepositoryClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewUserRepositoryClient(cc grpc.ClientConnInterface) UserRepositoryClient {
+	return &userRepositoryClient{cc}
+}
+
+func (c *userRepositoryClient) All(ctx context.Context, in *AllUserRequest, opts ...grpc.CallOption) (*UserList, error) {
+	out := new(UserList)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/All", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userRepositoryClient) ByEmail(ctx context.Context, in *UserByEmailRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/ByEmail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userRepositoryClient) ByHandle(ctx context.Context, in *UserByHandleRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/ByHandle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userRepositoryClient) Create(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/Create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userRepositoryClient) Update(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userRepositoryClient) Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.UserRepository/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UserRepositoryServer is the server API for UserRepository service.
+// All implementations must embed UnimplementedUserRepositoryServer
+// for forward compatibility
+type UserRepositoryServer interface {
+	All(context.Context, *AllUserRequest) (*UserList, error)
+	ByEmail(context.Context, *UserByEmailRequest) (*User, error)
+	ByHandle(context.Context, *UserByHandleRequest) (*User, error)
+	Create(context.Context, *User) (*User, error)
+	Update(context.Context, *User) (*User, error)
+	Delete(context.Context, *DeleteUserRequest) (*Empty, error)
+	mustEmbedUnimplementedUserRepositoryServer()
+}
+
+// UnimplementedUserRepositoryServer must be embedded to have forward compatible implementations.
+type UnimplementedUserRepositoryServer struct {
+}
+
+func (UnimplementedUserRepositoryServer) All(context.Context, *AllUserRequest) (*UserList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method All not implemented")
+}
+func (UnimplementedUserRepositoryServer) ByEmail(context.Context, *UserByEmailRequest) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ByEmail not implemented")
+}
+func (UnimplementedUserRepositoryServer) ByHandle(context.Context, *UserByHandleRequest) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ByHandle not implemented")
+}
+func (UnimplementedUserRepositoryServer) Create(context.Context, *User) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedUserRepositoryServer) Update(context.Context, *User) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedUserRepositoryServer) Delete(context.Context, *DeleteUserRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedUserRepositoryServer) mustEmbedUnimplementedUserRepositoryServer() {}
+
+// UnsafeUserRepositoryServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserRepositoryServer will
+// result in compilation errors.
+type UnsafeUserRepositoryServer interface {
+	mustEmbedUnimplementedUserRepositoryServer()
+}
+
+func RegisterUserRepositoryServer(s grpc.ServiceRegistrar, srv UserRepositoryServer) {
+	s.RegisterService(&UserRepository_ServiceDesc, srv)
+}
+
+func _UserRepository_All_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AllUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).All(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/All",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).All(ctx, req.(*AllUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserRepository_ByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).ByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/ByEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).ByEmail(ctx, req.(*UserByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserRepository_ByHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserByHandleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).ByHandle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/ByHandle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).ByHandle(ctx, req.(*UserByHandleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserRepository_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/Create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).Create(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserRepository_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).Update(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserRepository_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserRepositoryServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserRepository/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserRepositoryServer).Delete(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// UserRepository_ServiceDesc is the grpc.ServiceDesc for UserRepository service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UserRepository_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.UserRepository",
+	HandlerType: (*UserRepositoryServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "All",
+			Handler:    _UserRepository_All_Handler,
+		},
+		{
+			MethodName: "ByEmail",
+			Handler:    _UserRepository_ByEmail_Handler,
+		},
+		{
+			MethodName: "ByHandle",
+			Handler:    _UserRepository_ByHandle_Handler,
+		},
+		{
+			MethodName: "Create",
+			Handler:    _UserRepository_Create_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _UserRepository_Update_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _UserRepository_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

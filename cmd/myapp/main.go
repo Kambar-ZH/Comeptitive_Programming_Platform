@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	store := inmemory.NewDB()
 
 	ctx, cancel := context.WithCancel(context.Background())

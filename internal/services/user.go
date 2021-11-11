@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/store"
+	"site/internal/middleware"
 )
 
 const (
@@ -44,16 +45,13 @@ func (u UserServiceImpl) ByHandle(ctx context.Context, handle string) (*datastru
 }
 
 func (u UserServiceImpl) Create(ctx context.Context, user *datastruct.User) error {
-	// TODO: VALIDATION
-	// if err := services.Validate(user); err != nil {
-	// 	return nil, err
-	// }
-
-	// if err := services.BeforeCreate(user); err != nil {
-	// 	return nil, err
-	// }
-	
-	// services.Sanitize(user)
+	if err := middleware.Validate(user); err != nil {
+		return err
+	}
+	if err := middleware.BeforeCreate(user); err != nil {
+		return err
+	}
+	middleware.Sanitize(user)
 	return u.repo.Create(ctx, user)
 }
 

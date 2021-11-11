@@ -1,61 +1,78 @@
 package handler
 
 import (
+	"log"
+	"net/http"
+	"site/internal/datastruct"
+	"site/internal/http/ioutils"
 	"site/internal/services"
+	"strconv"
+	"strings"
 )
 
 type UploadFileHandler struct {
 	service services.UploadFileService
 }
 
-// func (ufh UploadFileHandler) UploadFile() http.HandlerFunc {
-// 	type UploadViewData struct {
-// 		FileName    string
-// 		ProblemName int
-// 		Verdict     string
-// 		FailedTest  int
-// 	}
+func NewUploadFileHandler(opts ...UploadFileHandlerOption) *UploadFileHandler {
+	ufh := &UploadFileHandler{}
+	for _, v := range(opts) {
+		v(ufh)
+	}
+	return ufh
+}
 
-// 	return func(w http.ResponseWriter, r *http.Request) {
+func (ufh UploadFileHandler) UploadFile() http.HandlerFunc {
+	type UploadViewData struct {
+		FileName    string
+		ProblemName int
+		Verdict     string
+		FailedTest  int
+	}
 
-// 		r.ParseMultipartForm(10 << 20)
+	return func(w http.ResponseWriter, r *http.Request) {
 
-// 		file, handler, err := r.FormFile("myFile")
-// 		if err != nil {
-// 			ioutils.Error(w, r, http.StatusInternalServerError, err)
-// 			return
-// 		}
-// 		defer file.Close()
+		r.ParseMultipartForm(10 << 20)
 
-// 		tempFileName, err := ufh.service.SaveInmemory(file)
-// 		if err != nil {
-// 			ioutils.Error(w, r, http.StatusInternalServerError, err)
-// 			return
-// 		}
+		file, handler, err := r.FormFile("myFile")
+		if err != nil {
+			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		defer file.Close()
 
-// 		problemId, err := strconv.Atoi(r.FormValue("problemId"))
-// 		if err != nil {
-// 			ioutils.Error(w, r, http.StatusInternalServerError, err)
-// 			return
-// 		}
-// 		fileName := strings.ReplaceAll(tempFileName, "\\\\", "/")
-// 		log.Println(fileName)
+		tempFileName, err := ufh.service.SaveInmemory(file)
+		if err != nil {
+			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-// 		subResult := ufh.service.TestSolution(fileName, problemId)
-// 		s.store.Submissions().Create(s.ctx, &datastruct.Submission{
-// 			Id:           15, // hardcoded
-// 			ProblemId:    int32(problemId),
-// 			AuthorHandle: "Kambar",
-// 			Verdict:      string(subResult.Verdict),
-// 		})
+		problemId, err := strconv.Atoi(r.FormValue("problemId"))
+		if err != nil {
+			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		fileName := strings.ReplaceAll(tempFileName, "\\\\", "/")
+		log.Println(fileName)
 
-// 		data := UploadViewData{
-// 			FileName:    handler.Filename,
-// 			ProblemName: problemId,
-// 			Verdict:     string(subResult.Verdict),
-// 			FailedTest:  int(subResult.FailedTest),
-// 		}
+		subResult, err := ufh.service.TestSolution(fileName, problemId)
+		if err != nil {
+			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		ufh.service.Create(r.Context(), &datastruct.Submission{
+			Id:           15, // hardcoded
+			ProblemId:    int32(problemId),
+			Verdict:      string(subResult.Verdict),
+		})
 
-// 		ioutils.Respond(w, r, http.StatusAccepted, data)
-// 	}
-// }
+		data := UploadViewData{
+			FileName:    handler.Filename,
+			ProblemName: problemId,
+			Verdict:     string(subResult.Verdict),
+			FailedTest:  int(subResult.FailedTest),
+		}
+
+		ioutils.Respond(w, r, http.StatusAccepted, data)
+	}
+}

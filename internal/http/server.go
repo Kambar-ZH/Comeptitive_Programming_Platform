@@ -4,9 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 	"site/internal/http/handler"
 	"site/internal/http/ioutils"
+	"site/internal/middleware"
 	"site/internal/services"
 	"site/internal/store"
 	"time"
@@ -14,13 +15,11 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
-	"github.com/sirupsen/logrus"
 )
 
 type Server struct {
 	ctx         context.Context
 	idleConnsCh chan struct{}
-	logger      *logrus.Logger
 
 	store        store.Store
 	sessionStore sessions.Store
@@ -44,25 +43,27 @@ func (s *Server) basicHandler() chi.Router {
 
 	us := services.NewUserService(services.WithUserRepo(s.store.Users()))
 	ss := services.NewSubmissionService(services.WithSubmissionRepo(s.store.Submissions()))
+	ufs := services.NewUploadFileService(services.UploadFileWithSubmissionRepo(s.store.Submissions()))
 
 	uh := handler.NewUserHandler(handler.WithUserService(us))
 	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
+	ufh := handler.NewUploadFileHandler(handler.WithUploadFileService(ufs))
 
 	s.PrepareUserRoutes(r, uh)
 	s.PrepareSubmissionRoutes(r, sh)
+	s.PrepareUploadFileRoutes(r, ufh)
 
 	r.HandleFunc("/sessions", s.HandleSessionsCreate())
 	r.Route("/private", func(r chi.Router) {
 		r.Use(s.AuthenticateUser)
 		r.HandleFunc("/whoami", s.handleWhoami())
-		// s.PrepareUploadFileRoutes(r)
 	})
 	return r
 }
 
 func (s *Server) handleWhoami() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ioutils.Respond(w, r, http.StatusOK, r.Context().Value(ctxKeyUser).(*api.User))
+		ioutils.Respond(w, r, http.StatusOK, r.Context().Value(middleware.CtxKeyUser).(*datastruct.User))
 	}
 }
 

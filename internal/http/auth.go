@@ -3,22 +3,9 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"site/internal/middleware"
 	"net/http"
 	"site/internal/http/ioutils"
-)
-
-type ctxKey int8
-
-const (
-	sessionName        = "gopherschool"
-	ctxKeyUser  ctxKey = iota
-	ctxKeyRequestID
-)
-
-var (
-	errIncorrectEmailOrPassword = fmt.Errorf("incorrect email or password")
-	errNotAuthenticated         = fmt.Errorf("not authenticated")
 )
 
 func (s *Server) HandleSessionsCreate() http.HandlerFunc {
@@ -34,12 +21,12 @@ func (s *Server) HandleSessionsCreate() http.HandlerFunc {
 		}
 
 		user, err := s.store.Users().ByEmail(s.ctx, req.Email)
-		// if err != nil || !services.ComparePassword(user, req.Password) {
-		// 	ioutils.Error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
-		// 	return
-		// }
+		if err != nil || !middleware.ComparePassword(user, req.Password) {
+			ioutils.Error(w, r, http.StatusUnauthorized, middleware.ErrIncorrectEmailOrPassword)
+			return
+		}
 
-		session, err := s.sessionStore.Get(r, sessionName)
+		session, err := s.sessionStore.Get(r, middleware.SessionName)
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
@@ -57,7 +44,7 @@ func (s *Server) HandleSessionsCreate() http.HandlerFunc {
 
 func (s *Server) AuthenticateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := s.sessionStore.Get(r, sessionName)
+		session, err := s.sessionStore.Get(r, middleware.SessionName)
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
@@ -65,16 +52,15 @@ func (s *Server) AuthenticateUser(next http.Handler) http.Handler {
 
 		handle, ok := session.Values["user_handle"]
 		if !ok {
-			ioutils.Error(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			ioutils.Error(w, r, http.StatusUnauthorized, middleware.ErrNotAuthenticated)
 			return
 		}
 		// TODO: CHECK THAT HANDLE IS STRING
 		user, err := s.store.Users().ByHandle(s.ctx, handle.(string))
 		if err != nil {
-			ioutils.Error(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			ioutils.Error(w, r, http.StatusUnauthorized, middleware.ErrNotAuthenticated)
 			return
 		}
-
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, user)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), middleware.CtxKeyUser, user)))
 	})
 }

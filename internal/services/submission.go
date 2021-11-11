@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/store"
+	"site/internal/middleware"
 )
 
 const (
@@ -49,6 +50,13 @@ func (s SubmissionServiceImpl) ByAuthorHandle(ctx context.Context, handle string
 }
 
 func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
+	// TODO: ASSIGN USER TO SUBMISSION
+	_, err := s.repo.ById(ctx, int(submission.Id))
+	if err != nil {
+		return err
+	}
+	user := middleware.UserFromCtx(ctx)
+	submission.AuthorHandle = user.Handle
 	return s.repo.Create(ctx, submission)
 }
 

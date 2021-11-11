@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"site/internal/grpc/api"
 	"site/internal/http/ioutils"
-	"site/internal/services"
 )
 
 type ctxKey int8
@@ -35,11 +33,11 @@ func (s *Server) HandleSessionsCreate() http.HandlerFunc {
 			return
 		}
 
-		user, err := s.store.Users().ByEmail(s.ctx, &api.UserRequestEmail{Email: req.Email})
-		if err != nil || !services.ComparePassword(user, req.Password) {
-			ioutils.Error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
-			return
-		}
+		user, err := s.store.Users().ByEmail(s.ctx, req.Email)
+		// if err != nil || !services.ComparePassword(user, req.Password) {
+		// 	ioutils.Error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
+		// 	return
+		// }
 
 		session, err := s.sessionStore.Get(r, sessionName)
 		if err != nil {
@@ -70,8 +68,8 @@ func (s *Server) AuthenticateUser(next http.Handler) http.Handler {
 			ioutils.Error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
-
-		user, err := s.store.Users().ByHandle(s.ctx, &api.UserRequestHandle{Handle: handle.(string)})
+		// TODO: CHECK THAT HANDLE IS STRING
+		user, err := s.store.Users().ByHandle(s.ctx, handle.(string))
 		if err != nil {
 			ioutils.Error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return

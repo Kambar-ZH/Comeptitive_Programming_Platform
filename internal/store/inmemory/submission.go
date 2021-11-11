@@ -3,7 +3,7 @@ package inmemory
 import (
 	"context"
 	"fmt"
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -11,56 +11,76 @@ import (
 )
 
 type SubmissionRepo struct {
-	data map[int32]*api.Submission
-	api.UnimplementedSubmissionRepositoryServer
+	data map[int32]*datastruct.Submission
 	mu   *sync.RWMutex
 }
 
-func (db *SubmissionRepo) All(ctx context.Context, empty *api.AllSubmissionsRequest) (*api.SubmissionList, error) {
+
+func (db *SubmissionRepo) All(ctx context.Context, offset, limit int) ([]*datastruct.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	res := []*api.Submission{}
+	res := []*datastruct.Submission{}
 	for _, submission := range db.data {
 		res = append(res, submission)
 	}
-	ans := api.SubmissionList{Submissions: res}
 
-	return &ans, nil
+	return res, nil
 }
 
-func (db *SubmissionRepo) ById(ctx context.Context, submission *api.SubmissionByIdRequest) (*api.Submission, error) {
+func (db *SubmissionRepo) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	if submission, ok := db.data[submission.Id]; ok {
+	if submission, ok := db.data[int32(id)]; ok {
 		return submission, nil
 	}
 
-	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("submission with id %d does not exist", submission.Id))
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("submission with id %d does not exist", id))
 }
 
-func (db *SubmissionRepo) Create(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	db.data[submission.Id] = submission
-	return submission, nil
-}
-
-func (db *SubmissionRepo) Update(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	db.data[submission.Id] = submission
-
-	return submission, nil
-}
-
-func (db *SubmissionRepo) Delete(ctx context.Context, submission *api.DeleteSubmissionRequest) (*api.Empty, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	if _, ok := db.data[submission.Id]; !ok {
-		return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+func (db *SubmissionRepo) ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	res := []*datastruct.Submission{}
+	for _, submission := range db.data {
+		if submission.ContestId == int32(contestId) {
+			res = append(res, submission)
+		}
 	}
-	delete(db.data, submission.Id)
-	return &api.Empty{}, nil
+	return res, nil
+}
+
+func (db *SubmissionRepo) ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	res := []*datastruct.Submission{}
+	for _, submission := range db.data {
+		if submission.AuthorHandle == handle {
+			res = append(res, submission)
+		}
+	}
+
+	return res, nil
+}
+
+func (db *SubmissionRepo) Create(ctx context.Context, submission *datastruct.Submission) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	db.data[submission.Id] = submission
+	return nil
+}
+
+func (db *SubmissionRepo) Update(ctx context.Context, submission *datastruct.Submission) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	db.data[submission.Id] = submission
+	return nil
+}
+
+func (db *SubmissionRepo) Delete(ctx context.Context, id int) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	delete(db.data, int32(id))
+	return nil
 }

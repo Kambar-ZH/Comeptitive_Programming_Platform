@@ -52,7 +52,6 @@ message ComparePasswordResponse {
 
 message Empty {}
 
-
 service UserRepository {
   rpc All(AllUserRequest) returns (UserList);
   rpc ByEmail(UserByEmailRequest) returns (User);

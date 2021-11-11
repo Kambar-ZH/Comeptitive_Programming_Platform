@@ -23,11 +23,11 @@
 <body>
   <div>
     <p>File successfully uploaded. {{ .FileName}} for the problem {{ .ProblemName}}</p>
-    {{if eq .Verdict 0}}
+    {{if eq .Verdict "Passed"}}
     <p>All tests passed successfully</p>
-    {{else if eq .Verdict 1}}
+    {{else if eq .Verdict "Failed Test"}}
     <p>Wrong answer on test {{ .FailedTest}}</p>
-    {{else if eq .Verdict 2}}
+    {{else if eq .Verdict "Compilation Error"}}
     <p>Compilation error</p>
     {{else}}
     <p>Unknown error</p>

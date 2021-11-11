@@ -7,6 +7,7 @@ import (
 	"site/internal/grpc/api"
 	"site/internal/http/handler"
 	"site/internal/http/ioutils"
+	"site/internal/services"
 	"site/internal/store"
 	"time"
 
@@ -41,21 +42,20 @@ func (s *Server) basicHandler() chi.Router {
 	r := chi.NewRouter()
 	r.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
-	// r.Use(s.logRequest)
+	us := services.NewUserService(services.WithUserRepo(s.store.Users()))
+	ss := services.NewSubmissionService(services.WithSubmissionRepo(s.store.Submissions()))
 
-	uh := &handler.UserHandler{Repository: s.store.Users()}
-	sh := &handler.SubmissionHandler{Repository: s.store.Submissions()}
+	uh := handler.NewUserHandler(handler.WithUserService(us))
+	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
 
 	s.PrepareUserRoutes(r, uh)
 	s.PrepareSubmissionRoutes(r, sh)
 
-	s.PrepareGuestWebPageRoutes(r)
-	
 	r.HandleFunc("/sessions", s.HandleSessionsCreate())
 	r.Route("/private", func(r chi.Router) {
 		r.Use(s.AuthenticateUser)
 		r.HandleFunc("/whoami", s.handleWhoami())
-		s.PrepareAuthenticatedWebPageRoutes(r)
+		// s.PrepareUploadFileRoutes(r)
 	})
 	return r
 }

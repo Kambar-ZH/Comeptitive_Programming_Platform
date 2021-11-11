@@ -3,8 +3,7 @@ package inmemory
 import (
 	"context"
 	"fmt"
-	"site/internal/grpc/api"
-	"site/internal/services"
+	"site/internal/datastruct"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -12,76 +11,64 @@ import (
 )
 
 type UserRepo struct {
-	data map[string]*api.User
-	api.UnimplementedUserRepositoryServer
-	mu *sync.RWMutex
+	data map[string]*datastruct.User
+	mu   *sync.RWMutex
 }
 
-func (db *UserRepo) All(ctx context.Context, empty *api.AllUserRequest) (*api.UserList, error) {
+// db *UserRepo
+
+func (db *UserRepo) All(ctx context.Context, offset, limit int) ([]*datastruct.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	res := []*api.User{}
+	res := []*datastruct.User{}
 	for _, user := range db.data {
 		res = append(res, user)
 	}
-	ans := api.UserList{Users: res}
 
-	return &ans, nil
+	return res, nil
 }
 
-func (db *UserRepo) ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	if user, ok := db.data[req.Handle]; ok {
-		return user, nil
-	}
-
-	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", req.Handle))
-}
-
-func (db *UserRepo) ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error) {
+func (db *UserRepo) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	for _, user := range db.data {
-		if user.Email == req.Email {
+		if user.Email == email {
 			return user, nil
 		}
 	}
 
-	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with email %s does not exist", req.Email))
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with email %s does not exist", email))
 }
 
-func (db *UserRepo) Create(ctx context.Context, user *api.User) (*api.User, error) {
+func (db *UserRepo) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if user, ok := db.data[handle]; ok {
+		return user, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", handle))
+}
+
+func (db *UserRepo) Create(ctx context.Context, user *datastruct.User) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-
-	if err := services.Validate(user); err != nil {
-		return nil, err
-	}
-
-	if err := services.BeforeCreate(user); err != nil {
-		return nil, err
-	}
 
 	db.data[user.Handle] = user
-	return user, nil
+	return nil
 }
 
-func (db *UserRepo) Update(ctx context.Context, user *api.User) (*api.User, error) {
+func (db *UserRepo) Update(ctx context.Context, user *datastruct.User) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.data[user.Handle] = user
-
-	return user, nil
+	return nil
 }
 
-func (db *UserRepo) Delete(ctx context.Context, req *api.DeleteUserRequest) (*api.Empty, error) {
+func (db *UserRepo) Delete(ctx context.Context, handle string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	if _, ok := db.data[req.Handle]; !ok {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("user with handle %s does not exist", req.Handle))
-	}
-	delete(db.data, req.Handle)
-	return &api.Empty{}, nil
+	delete(db.data, handle)
+	return nil
 }

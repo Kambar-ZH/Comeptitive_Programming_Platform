@@ -1,25 +1,11 @@
 package models
 
-type Verdict int64
+type Verdict string
 
 const (
-	PASSED Verdict = iota
-	FAILED
-	COMPILATION_ERROR
-	TIME_LIMIT_ERROR
-	UNKNOWN_ERROR
+	PASSED Verdict = "Passed"
+	FAILED Verdict = "Failed Test"
+	COMPILATION_ERROR = "Compilation Error"
+	TIME_LIMIT_ERROR = "Time Limit Error"
+	UNKNOWN_ERROR = "Unknown Error"
 )
-
-func (v Verdict) String() string {
-	switch v {
-	case PASSED:
-		return "Passed"
-	case FAILED:
-		return "Failed"
-	case COMPILATION_ERROR:
-		return "Compilation Error"
-	case TIME_LIMIT_ERROR:
-		return "Time limit error"
-	}
-	return "Unknown error"
-}

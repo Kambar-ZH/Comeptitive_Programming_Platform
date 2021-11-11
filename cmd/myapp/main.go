@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	grpc_server "site/internal/grpc/server"
 	"site/internal/http"
 	"site/internal/store/inmemory"
 	"syscall"
@@ -25,9 +24,6 @@ func main() {
 		<-c
 		cancel()
 	}()
-
-	gsrv := grpc_server.NewServer(ctx, ":8081", store)
-	go gsrv.Run()
 
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
 	srv := http.NewServer(ctx, ":8080", store, sessionStore)

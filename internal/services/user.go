@@ -2,21 +2,21 @@ package services
 
 import (
 	"context"
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 	"site/internal/store"
 )
 
 const (
-	usersLimitPerPage = 20
+	usersPerPage = 20
 )
 
 type UserService interface {
-	All(ctx context.Context, req *api.AllUserRequest) (*api.UserList, error)
-	ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error)
-	ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) 
-	Create(ctx context.Context, user *api.User) (*api.User, error) 
-	Update(ctx context.Context, user *api.User) (*api.User, error)
-	Delete(ctx context.Context, user *api.DeleteUserRequest) (*api.Empty, error)
+	All(ctx context.Context, page int) ([]*datastruct.User, error)
+	ByEmail(ctx context.Context, email string) (*datastruct.User, error)
+	ByHandle(ctx context.Context, handle string) (*datastruct.User, error)
+	Create(ctx context.Context, user *datastruct.User) error
+	Update(ctx context.Context, user *datastruct.User) error
+	Delete(ctx context.Context, handle string) error
 }
 
 type UserServiceImpl struct {
@@ -25,50 +25,52 @@ type UserServiceImpl struct {
 
 func NewUserService(opts ...UserServiceOption) UserService {
 	svc := &UserServiceImpl{}
-	for _, v := range(opts) {
+	for _, v := range opts {
 		v(svc)
 	}
 	return svc
 }
 
-func (u UserServiceImpl) All(ctx context.Context, req *api.AllUserRequest) (*api.UserList, error) {
-	req.Limit = usersLimitPerPage
-
-	return u.repo.All(ctx, req)
+func (u UserServiceImpl) All(ctx context.Context, page int) ([]*datastruct.User, error) {
+	return u.repo.All(ctx, (page-1)*usersPerPage, usersPerPage)
 }
 
-func (u UserServiceImpl) ByEmail(ctx context.Context, req *api.UserByEmailRequest) (*api.User, error) {
-	return u.repo.ByEmail(ctx, req)
+func (u UserServiceImpl) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
+	return u.repo.ByEmail(ctx, email)
 }
 
-func (u UserServiceImpl) ByHandle(ctx context.Context, req *api.UserByHandleRequest) (*api.User, error) {
-	return u.repo.ByHandle(ctx, req)
+func (u UserServiceImpl) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
+	return u.repo.ByHandle(ctx, handle)
 }
 
-func (u UserServiceImpl) Create(ctx context.Context, user *api.User) (*api.User, error) {
+func (u UserServiceImpl) Create(ctx context.Context, user *datastruct.User) error {
+	// TODO: VALIDATION
+	// if err := services.Validate(user); err != nil {
+	// 	return nil, err
+	// }
+
+	// if err := services.BeforeCreate(user); err != nil {
+	// 	return nil, err
+	// }
+	
+	// services.Sanitize(user)
 	return u.repo.Create(ctx, user)
 }
 
-func (u UserServiceImpl) Update(ctx context.Context, user *api.User) (*api.User, error) {
+func (u UserServiceImpl) Update(ctx context.Context, user *datastruct.User) error {
 	// TODO: add admin permission
-	req := &api.UserByHandleRequest{
-		Handle: user.Handle,
-	}
-	_, err := u.repo.ByHandle(ctx, req)
+	_, err := u.repo.ByHandle(ctx, user.Handle)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	return u.repo.Update(ctx, user)
 }
 
-func (u UserServiceImpl) Delete(ctx context.Context, user *api.DeleteUserRequest) (*api.Empty, error) {
+func (u UserServiceImpl) Delete(ctx context.Context, handle string) error {
 	// TODO: add admin permission
-	req := &api.UserByHandleRequest{
-		Handle: user.Handle,
-	}
-	_, err := u.repo.ByHandle(ctx, req)
+	_, err := u.repo.ByHandle(ctx, handle)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return u.repo.Delete(ctx, user)
+	return u.repo.Delete(ctx, handle)
 }

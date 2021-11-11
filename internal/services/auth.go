@@ -1,12 +1,30 @@
 package services
 
 import (
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type AuthService interface {
+	Validate(user *datastruct.User) error
+	Sanitize(user *datastruct.User)
+	ComparePassword(user *datastruct.User, password string) bool
+	BeforeCreate(user *datastruct.User) error
+	EncryptPassword(unencryptedPassword string) (string, error)
+}
+
+type AuthServiceImpl struct {}
+
+func NewAuthService(opts ...AuthServiceOption) AuthService {
+	svc := &AuthServiceImpl{}
+	for _, v := range(opts) {
+		v(svc)
+	}
+	return svc
+}
 
 func requiredIf(cond bool) validation.RuleFunc {
 	return func(value interface{}) error {
@@ -18,7 +36,7 @@ func requiredIf(cond bool) validation.RuleFunc {
 	}
 }
 
-func Validate(user *api.User) error {
+func (a AuthServiceImpl) Validate(user *datastruct.User) error {
 	return validation.ValidateStruct(
 		user,
 		validation.Field(&user.Email, validation.Required, is.Email),
@@ -26,33 +44,30 @@ func Validate(user *api.User) error {
 	)
 }
 
-func Sanitize(user *api.User) {
+func (a AuthServiceImpl) Sanitize(user *datastruct.User) {
 	user.Password = ""
 }
 
-func ComparePassword(user *api.User, password string) bool {
+func (a AuthServiceImpl) ComparePassword(user *datastruct.User, password string) bool {
 	result := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)) == nil
 	return result
 }
 
-func BeforeCreate(user *api.User) error {
+func (a AuthServiceImpl) BeforeCreate(user *datastruct.User) error {
 	if len(user.Password) > 0 {
-		res, err := EncryptPassword(&api.EncryptPasswordRequest{UnencryptedPassword: user.Password})
+		encryptedPassword, err := a.EncryptPassword(user.Password)
 		if err != nil {
 			return err
 		}
-		user.EncryptedPassword = res.Password
+		user.EncryptedPassword = encryptedPassword
 	}
 	return nil
 }
 
-func EncryptPassword(req *api.EncryptPasswordRequest) (*api.EncryptPasswordResponse, error) {
-	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(req.UnencryptedPassword), bcrypt.MinCost)
+func (a AuthServiceImpl) EncryptPassword(unencryptedPassword string) (string, error) {
+	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(unencryptedPassword), bcrypt.MinCost)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	res := &api.EncryptPasswordResponse{
-		Password: string(encryptedPassword),
-	}
-	return res, nil
+	return string(encryptedPassword), nil
 }

@@ -2,22 +2,22 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 	"site/internal/store"
 )
 
 const (
-	submissionsLimitPerPage = 20
+	submissionsPerPage = 20
 )
 
 type SubmissionService interface {
-	All(ctx context.Context, req *api.AllSubmissionsRequest) (*api.SubmissionList, error)
-	ById(ctx context.Context, req *api.SubmissionByIdRequest) (*api.Submission, error)
-	ByAuthorHandle(ctx context.Context, req *api.SubmissionByHandleRequest) (*api.Submission, error)
-	Create(ctx context.Context, submission *api.Submission) (*api.Submission, error)
-	Update(ctx context.Context, submission *api.Submission) (*api.Submission, error) 
-	Delete(ctx context.Context, req *api.DeleteSubmissionRequest) (*api.Empty, error)
+	All(ctx context.Context, page int) ([]*datastruct.Submission, error)
+	ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error)
+	ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error)
+	ById(ctx context.Context, id int) (*datastruct.Submission, error)
+	Create(ctx context.Context, submission *datastruct.Submission) error
+	Update(ctx context.Context, submission *datastruct.Submission) error
+	Delete(ctx context.Context, id int) error
 }
 
 type SubmissionServiceImpl struct {
@@ -26,50 +26,44 @@ type SubmissionServiceImpl struct {
 
 func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 	svc := &SubmissionServiceImpl{}
-	for _, v := range (opts) {
+	for _, v := range opts {
 		v(svc)
 	}
 	return svc
 }
 
-func (s SubmissionServiceImpl) All(ctx context.Context, req *api.AllSubmissionsRequest) (*api.SubmissionList, error) {
-	req.Limit = submissionsLimitPerPage
-	return s.repo.All(ctx, req)
+func (s SubmissionServiceImpl) ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error) {
+	return s.repo.ByContestId(ctx, contestId)
 }
 
-func (s SubmissionServiceImpl) ById(ctx context.Context, req *api.SubmissionByIdRequest) (*api.Submission, error) {
-	return s.repo.ById(ctx, req)
+func (s SubmissionServiceImpl) All(ctx context.Context, page int) ([]*datastruct.Submission, error) {
+	return s.repo.All(ctx, (page-1)*submissionsPerPage, submissionsPerPage)
 }
 
-func (s SubmissionServiceImpl) ByAuthorHandle(ctx context.Context, req *api.SubmissionByHandleRequest) (*api.Submission, error) {
-	return s.repo.ByAuthorHandle(ctx, req)
+func (s SubmissionServiceImpl) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
+	return s.repo.ById(ctx, id)
 }
 
-func (s SubmissionServiceImpl) Create(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
+func (s SubmissionServiceImpl) ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error) {
+	return s.repo.ByAuthorHandle(ctx, handle)
+}
+
+func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
 	return s.repo.Create(ctx, submission)
 }
 
-func (s SubmissionServiceImpl) Update(ctx context.Context, submission *api.Submission) (*api.Submission, error) {
-	req := &api.SubmissionByIdRequest{
-		Id: submission.Id,
-	}
-	_, err := s.repo.ById(ctx, req)
+func (s SubmissionServiceImpl) Update(ctx context.Context, submission *datastruct.Submission) error {
+	_, err := s.repo.ById(ctx, int(submission.Id))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	return s.repo.Update(ctx, submission)
 }
 
-func (s SubmissionServiceImpl) Delete(ctx context.Context, req *api.DeleteSubmissionRequest) (*api.Empty, error) {
-	req2 := &api.SubmissionByIdRequest{
-		Id: req.Id,
-	}
-	submission, err := s.repo.ById(ctx, req2)
+func (s SubmissionServiceImpl) Delete(ctx context.Context, id int) error {
+	_, err := s.repo.ById(ctx, id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if submission.ContestId != req.ContestId {
-		return nil, fmt.Errorf("contestId doesn't match to submissionId")
-	}
-	return s.repo.Delete(ctx, req)
+	return s.repo.Delete(ctx, id)
 }

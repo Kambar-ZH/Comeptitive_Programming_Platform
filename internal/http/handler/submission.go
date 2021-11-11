@@ -2,10 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"site/internal/grpc/api"
+	"site/internal/datastruct"
 	"site/internal/http/ioutils"
 	"site/internal/services"
 	"strconv"
@@ -17,7 +16,7 @@ type SubmissionHandler struct {
 	service services.SubmissionService
 }
 
-func NewSubmissionService(opts ...SubmissionHandlerOption) *SubmissionHandler {
+func NewSubmissionHandler(opts ...SubmissionHandlerOption) *SubmissionHandler {
 	sh := &SubmissionHandler{}
 	for _, v := range opts {
 		v(sh)
@@ -26,26 +25,32 @@ func NewSubmissionService(opts ...SubmissionHandlerOption) *SubmissionHandler {
 }
 
 func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
-	submission := new(api.Submission)
+	submission := new(datastruct.Submission)
 	if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
 		ioutils.Error(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	submissionResult, err := sh.service.Create(r.Context(), submission)
+	err := sh.service.Create(r.Context(), submission)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	ioutils.Respond(w, r, http.StatusCreated, submissionResult)
+	ioutils.Respond(w, r, http.StatusCreated, nil)
 }
 
 func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		ioutils.Error(w, r, http.StatusBadRequest, err)
+	pageStr := r.URL.Query().Get("page")
+	page := 1
+	if (pageStr != "") {
+		pageNum, err := strconv.Atoi(pageStr)
+		if err != nil {
+			ioutils.Error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		page = pageNum
 	}
-	submissions, err := sh.service.All(r.Context(), &api.AllSubmissionsRequest{Page: int32(page)})
+	submissions, err := sh.service.All(r.Context(), page)
 	if err != nil {
 		log.Println(err)
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
@@ -61,12 +66,7 @@ func (sh *SubmissionHandler) ById(w http.ResponseWriter, r *http.Request) {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	contestIdStr := chi.URLParam(r, "contestId")
-	contestId, err := strconv.Atoi(contestIdStr)
-	if err != nil {
-		ioutils.Error(w, r, http.StatusBadRequest, err)
-	}
-	submission, err := sh.service.ById(r.Context(), &api.SubmissionByIdRequest{Id: int32(id)})
+	submission, err := sh.service.ById(r.Context(), id)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusNotFound, err)
 		return
@@ -75,52 +75,27 @@ func (sh *SubmissionHandler) ById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SubmissionHandler) Update(w http.ResponseWriter, r *http.Request) {
-	contestIdStr := chi.URLParam(r, "contestId")
-	contestId, err := strconv.Atoi(contestIdStr)
-	if err != nil {
-		ioutils.Error(w, r, http.StatusBadRequest, err)
-	}
-	submission := new(api.Submission)
+	submission := new(datastruct.Submission)
 	if err := json.NewDecoder(r.Body).Decode(submission); err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	if submission.ContestId != int32(contestId) {
-		ioutils.Error(w, r, http.StatusMethodNotAllowed, fmt.Errorf("page preview not allowed"))
-		return
-	}
-
-	submissionResult, err := sh.service.Update(r.Context(), submission)
+	err := sh.service.Update(r.Context(), submission)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	ioutils.Respond(w, r, http.StatusAccepted, submissionResult)
+	ioutils.Respond(w, r, http.StatusAccepted, nil)
 }
 
 func (sh *SubmissionHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	contestIdStr := chi.URLParam(r, "contestId")
-	contestId, err := strconv.Atoi(contestIdStr)
-	if err != nil {
-		ioutils.Error(w, r, http.StatusBadRequest, err)
-	}
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ioutils.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	submission, err := sh.service.ById(r.Context(), int32(id))
-	if err != nil {
-		ioutils.Error(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	if submission.ContestId != int32(contestId) {
-		ioutils.Error(w, r, http.StatusMethodNotAllowed, fmt.Errorf("page preview not allowed"))
-		return
-	}
-
-	if _, err = sh.service.Delete(r.Context(), int32(id)); err != nil {
+	if err = sh.service.Delete(r.Context(), id); err != nil {
 		ioutils.Error(w, r, http.StatusNotFound, err)
 		return
 	}

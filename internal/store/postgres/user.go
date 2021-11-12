@@ -20,12 +20,12 @@ type UserRepository struct {
 }
 
 func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
-	return nil
+	return &UserRepository{conn: conn}
 }
 
 func (u UserRepository) All(ctx context.Context, offset int, limit int) ([]*datastruct.User, error) {
 	users := make([]*datastruct.User, 0)
-	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET = $1 LIMIT = $2", offset, limit); err != nil {
+	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET $1 LIMIT $2", offset, limit); err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -33,7 +33,7 @@ func (u UserRepository) All(ctx context.Context, offset int, limit int) ([]*data
 
 func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
 	user := new(datastruct.User)
-	if err := u.conn.Select(user, "SELECT * FROM users WHERE email = $1", email); err != nil {
+	if err := u.conn.Get(user, "SELECT * FROM users WHERE email = $1", email); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -41,15 +41,15 @@ func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.
 
 func (u UserRepository) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
 	user := new(datastruct.User)
-	if err := u.conn.Select(user, "SELECT * FROM users WHERE handle = $1", handle); err != nil {
+	if err := u.conn.Get(user, "SELECT * FROM users WHERE handle = $1", handle); err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
 func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error {
-	_, err := u.conn.Exec("INSERT INTO users(handle, email, country, city, password) VALUES ($1, $2, $3, $4, $5)",
-		user.Handle, user.Email, user.Country, user.City, user.Password)
+	_, err := u.conn.Exec("INSERT INTO users(handle, email, country, city, encrypted_password) VALUES ($1, $2, $3, $4, $5)",
+		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error
 }
 
 func (u UserRepository) Update(ctx context.Context, user *datastruct.User) error {
-	_, err := u.conn.Exec("UPDATE users SET(handle, email, country, city, password) VALUES ($1, $2, $3, $4, $5)",
-		user.Handle, user.Email, user.Country, user.City, user.Password)
+	_, err := u.conn.Exec("UPDATE users SET(handle, email, country, city, encrypted_password) = ($1, $2, $3, $4, $5) WHERE handle = $1",
+		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {
 		return err
 	}

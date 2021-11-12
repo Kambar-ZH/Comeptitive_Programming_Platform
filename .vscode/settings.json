@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "postgresql://localhost",
+            "database": "codeforces",
+            "username": "postgres",
+            "password": "adminadmin"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "PGSQL",
+            "database": "codeforces",
+            "username": "postgres",
+            "password": "adminadmin"
+        }
+    ]
+}

@@ -6,6 +6,9 @@ import (
 )
 
 type Store interface {
+	Connect(url string) error
+	Close() error
+
 	Users() UserRepository
 	Submissions() SubmissionRepository
 }

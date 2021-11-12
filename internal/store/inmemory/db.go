@@ -19,6 +19,15 @@ func NewDB() store.Store {
 	}
 }
 
+// redudent for inmemory storage
+func (db *DB) Connect(url string) error {
+	return nil
+}
+
+func (db *DB) Close() error {
+	return nil
+}
+
 func (db *DB) Users() store.UserRepository {
 	if db.usersRepo == nil {
 		db.usersRepo = &UserRepo{

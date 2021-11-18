@@ -47,7 +47,7 @@ func (worker *Worker) CleanUp() error {
 	return nil
 }
 
-func (worker *Worker) RunTestCase(solutionFile, tempFile string, id int, testCase datastruct.TestCase) (dto.Verdict, error) {
+func (worker *Worker) RunTestCase(id int, testCase datastruct.TestCase) (dto.Verdict, error) {
 	expected, err := tools.MustExecuteFile(worker.mainSolutionExe, testCase)
 	if err != nil {
 		log.Println("error on executing main solution")

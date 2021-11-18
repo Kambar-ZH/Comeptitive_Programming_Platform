@@ -125,7 +125,7 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, worker *Worker,
 
 	defer worker.CleanUp()
 	for id, testCase := range validator.TestCases {
-		verdict, err := worker.RunTestCase(validator.SolutionFilePath, req.FilePath, id+1, testCase)
+		verdict, err := worker.RunTestCase(id+1, testCase)
 		if err != nil {
 			return nil, err
 		}

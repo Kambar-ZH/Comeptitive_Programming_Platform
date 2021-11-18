@@ -31,8 +31,8 @@ func CopyFile(f1Path, f2Path string) error {
 	return nil
 }
 
-func BuildExe() error {
-	cmd := exec.Command("make")
+func BuildExe(command string) error {
+	cmd := exec.Command("make", command)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {

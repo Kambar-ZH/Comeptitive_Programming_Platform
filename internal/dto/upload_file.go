@@ -1,6 +1,9 @@
 package dto
 
-import "mime/multipart"
+import (
+	"mime/multipart"
+	"site/internal/datastruct"
+)
 
 const (
 	PASSED            Verdict = "Passed"
@@ -11,14 +14,19 @@ const (
 )
 
 type (
-	Verdict            string
+	Verdict           string
 	UploadFileRequest struct {
 		File      multipart.File
 		ProblemId int
 	}
+	UploadFileResponse struct {
+		Submission *datastruct.Submission
+		Error      error
+	}
 	RunTestCasesRequest struct {
 		FilePath  string
 		ProblemId int
+		Command   string
 	}
 	RunTestCasesResponse struct {
 		Verdict    Verdict

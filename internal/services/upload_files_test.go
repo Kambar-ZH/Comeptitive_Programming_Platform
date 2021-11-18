@@ -21,7 +21,7 @@ func TestUploadFileServiceImpl_PrepareExe(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		err := PrepareExe(test.solutionFile, test.tempFile)
+		err := PrepareExe(test.solutionFile, test.tempFile, "all")
 		var foundErr bool
 		if (err != nil) {
 			foundErr = true

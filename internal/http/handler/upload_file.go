@@ -6,12 +6,10 @@ import (
 	"site/internal/http/ioutils"
 	"site/internal/services"
 	"strconv"
-	"sync"
 )
 
 type UploadFileHandler struct {
 	service services.UploadFileService
-	mu *sync.Mutex
 }
 
 func NewUploadFileHandler(opts ...UploadFileHandlerOption) *UploadFileHandler {
@@ -46,12 +44,10 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		uf.mu.Lock()
 		submission, err := uf.service.UploadFile(r.Context(), &dto.UploadFileRequest{
 			ProblemId: problemId,
 			File:      file,
 		})
-		uf.mu.Unlock()
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return

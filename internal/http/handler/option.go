@@ -2,7 +2,6 @@ package handler
 
 import (
 	"site/internal/services"
-	"sync"
 
 	"github.com/gorilla/sessions"
 )
@@ -27,12 +26,6 @@ func WithSubmissionService(service services.SubmissionService) SubmissionHandler
 func WithUploadFileService(service services.UploadFileService) UploadFileHandlerOption {
 	return func(uf *UploadFileHandler) {
 		uf.service = service
-	}
-}
-
-func WithWaitGroup(mu *sync.Mutex) UploadFileHandlerOption {
-	return func(uf *UploadFileHandler) {
-		uf.mu = mu
 	}
 }
 

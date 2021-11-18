@@ -9,7 +9,6 @@ import (
 	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/store"
-	"site/internal/tools"
 	"site/test/inmemory"
 	"strings"
 )
@@ -18,38 +17,36 @@ type UploadFileService interface {
 	UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error)
 }
 
-type Task struct {
-	req *dto.UploadFileRequest
-	ctx context.Context
-	out chan *dto.UploadFileResponse
-}
-
-type Pool struct {
-	tasks    chan *Task
-	commands []string
-}
-
 type UploadFileServiceImpl struct {
 	store store.Store
-	pool  *Pool
+
+	tasks   chan *Task
+	workers []*Worker
 }
 
 func (u UploadFileServiceImpl) RunPool() {
-	for _, command := range u.pool.commands {
-		go u.Worker(command)
+	for _, worker := range u.workers {
+		go u.RunWorker(worker)
 	}
-}	
+}
 
 func NewUploadFileService(opts ...UploadFileServiceOption) UploadFileService {
-	svc := &UploadFileServiceImpl{}
+	svc := &UploadFileServiceImpl{
+		tasks: make(chan *Task, 100),
+		workers: []*Worker{
+			{
+				command:                "all",
+				cleanFile:              inmemory.AbsolutePath("cmd/myapp/main_solution/clean.txt"),
+				mainSolution:           inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.go"),
+				mainSolutionExe:        inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.exe"),
+				participantSolution:    inmemory.AbsolutePath("cmd/myapp/participant_solution/participant_solution.go"),
+				participantSolutionExe: inmemory.AbsolutePath("cmd/myapp/participant_solution/participant_solution.exe"),
+			},
+		},
+	}
 	for _, v := range opts {
 		v(svc)
 	}
-	svc.pool = &Pool{
-		tasks:    make(chan *Task, 100),
-		commands: []string{"all"},
-	}
-	svc.RunPool()
 	return svc
 }
 
@@ -79,8 +76,8 @@ func (u UploadFileServiceImpl) SaveInmemory(file multipart.File) (string, error)
 	return filePath, nil
 }
 
-func (u *UploadFileServiceImpl) Worker(command string) {
-	for task := range u.pool.tasks {
+func (u UploadFileServiceImpl) RunWorker(worker *Worker) {
+	for task := range u.tasks {
 		filePath, err := u.SaveInmemory(task.req.File)
 		if err != nil {
 			task.out <- &dto.UploadFileResponse{Submission: nil, Error: err}
@@ -88,10 +85,9 @@ func (u *UploadFileServiceImpl) Worker(command string) {
 		}
 		log.Println(filePath)
 
-		res, err := u.RunTestCases(task.ctx, &dto.RunTestCasesRequest{
+		res, err := u.RunTestCases(task.ctx, worker, &dto.RunTestCasesRequest{
 			FilePath:  filePath,
 			ProblemId: task.req.ProblemId,
-			Command: command,
 		})
 		if err != nil {
 			task.out <- &dto.UploadFileResponse{Submission: nil, Error: err}
@@ -108,7 +104,7 @@ func (u *UploadFileServiceImpl) Worker(command string) {
 
 func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
 	out := make(chan *dto.UploadFileResponse)
-	u.pool.tasks <- &Task{
+	u.tasks <- &Task{
 		req: req,
 		ctx: ctx,
 		out: out,
@@ -117,17 +113,19 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 	return result.Submission, result.Error
 }
 
-func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
+func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, worker *Worker, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
 	validator, err := u.store.Validators().ByProblemId(ctx, req.ProblemId)
 	if err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
 	}
-	if err := PrepareExe(validator.SolutionFilePath, req.FilePath, req.Command); err != nil {
+
+	if err := worker.PrepareExe(validator.SolutionFilePath, req.FilePath); err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
 	}
-	defer CleanUp()
+
+	defer worker.CleanUp()
 	for id, testCase := range validator.TestCases {
-		verdict, err := RunTestCase(validator.SolutionFilePath, req.FilePath, id+1, testCase)
+		verdict, err := worker.RunTestCase(validator.SolutionFilePath, req.FilePath, id+1, testCase)
 		if err != nil {
 			return nil, err
 		}
@@ -139,53 +137,4 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTes
 		}
 	}
 	return &dto.RunTestCasesResponse{Verdict: dto.PASSED}, nil
-}
-
-func PrepareExe(solutionFile, tempFile, command string) error {
-	if err := tools.CopyFile(inmemory.MainSolution(), solutionFile); err != nil {
-		log.Println("error on copying to main solution file")
-		return err
-	}
-	if err := tools.CopyFile(inmemory.ParticipantSolution(), tempFile); err != nil {
-		log.Println("error on copying to participant solution file")
-		return err
-	}
-	if err := tools.BuildExe(command); err != nil {
-		log.Println("error on building exe")
-		return err
-	}
-	return nil
-}
-
-func CleanUp() error {
-	if err := tools.CopyFile(inmemory.ParticipantSolution(), inmemory.CleanFile()); err != nil {
-		log.Println("error on cleaning participant solution")
-		return err
-	}
-	if err := tools.CopyFile(inmemory.MainSolution(), inmemory.CleanFile()); err != nil {
-		log.Println("error on cleaning main solution")
-		return err
-	}
-	return nil
-}
-
-func RunTestCase(solutionFile, tempFile string, id int, testCase datastruct.TestCase) (dto.Verdict, error) {
-	expected, err := tools.MustExecuteFile(inmemory.MainSolutionExe(), testCase)
-	if err != nil {
-		log.Println("error on executing main solution")
-		return dto.UNKNOWN_ERROR, err
-	}
-	actual, err := tools.MustExecuteFile(inmemory.ParticipantSolutionExe(), testCase)
-	if err != nil {
-		log.Println("error on executing participant solution")
-		return dto.COMPILATION_ERROR, err
-	}
-
-	if expected != actual {
-		log.Printf("[%d] incorrect result on test::\nExpected: %s\nActual: %s\n", id, expected, actual)
-		return dto.FAILED, err
-	}
-
-	log.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
-	return dto.PASSED, err
 }

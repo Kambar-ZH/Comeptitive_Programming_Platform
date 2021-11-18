@@ -26,7 +26,6 @@ type (
 	RunTestCasesRequest struct {
 		FilePath  string
 		ProblemId int
-		Command   string
 	}
 	RunTestCasesResponse struct {
 		Verdict    Verdict

@@ -4,10 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"site/internal/datastruct"
 	"site/internal/http/handler"
-	"site/internal/http/ioutils"
-	"site/internal/middleware"
 	"site/internal/services"
 	"site/internal/store"
 	"time"
@@ -41,30 +38,26 @@ func (s *Server) basicHandler() chi.Router {
 	r := chi.NewRouter()
 	r.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
-	us := services.NewUserService(services.WithUserRepo(s.store.Users()))
-	ss := services.NewSubmissionService(services.WithSubmissionRepo(s.store.Submissions()))
-	ufs := services.NewUploadFileService(services.UploadFileWithSubmissionRepo(s.store.Submissions()))
+	us := services.NewUserService(services.UserServiceWithStore(s.store))
+	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store))
+	ufs := services.NewUploadFileService(services.UploadFileServiceWithStore(s.store))
+	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
 
 	uh := handler.NewUserHandler(handler.WithUserService(us))
 	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
 	ufh := handler.NewUploadFileHandler(handler.WithUploadFileService(ufs))
+	ah := handler.NewAuthHandler(handler.WithAuthService(as), handler.WithSessionStore(s.sessionStore))
 
 	s.PrepareUserRoutes(r, uh)
 	s.PrepareSubmissionRoutes(r, sh)
 	s.PrepareUploadFileRoutes(r, ufh)
 
-	r.HandleFunc("/sessions", s.HandleSessionsCreate())
+	r.HandleFunc("/sessions", ah.CreateSession())
 	r.Route("/private", func(r chi.Router) {
-		r.Use(s.AuthenticateUser)
-		r.HandleFunc("/whoami", s.handleWhoami())
+		r.Use(ah.AuthenticateUser)
+		r.HandleFunc("/whoami", ah.HandleWhoami())
 	})
 	return r
-}
-
-func (s *Server) handleWhoami() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ioutils.Respond(w, r, http.StatusOK, r.Context().Value(middleware.CtxKeyUser).(*datastruct.User))
-	}
 }
 
 func (s *Server) Run() error {

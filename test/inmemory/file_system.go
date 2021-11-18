@@ -1,104 +1,50 @@
 package inmemory
 
-import (
-	"fmt"
-	"site/internal/models"
-)
-
-var (
-	fileSystem *FileSystem = nil
-)
-
-type FileSystem struct {
-	Tests                  map[int]models.Validator
-}
-
-func (fs *FileSystem) GetTestByID(id int) (*models.Validator, error) {
-	validator, ok := fs.Tests[id]
-	if !ok {
-		return nil, fmt.Errorf("problem with this id not found")
-	}
-	return &validator, nil
-}
-func (fs *FileSystem) GetRegisterHtml() string {
+func RegisterHtml() string {
 	relativePath := "web/template/register.html"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetLoginHtml() string {
+func LoginHtml() string {
 	relativePath := "web/template/login.html"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetIndexHtml() string {
+func IndexHtml() string {
 	relativePath := "web/template/index.html"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetUploadHtml() string {
+func UploadHtml() string {
 	relativePath := "web/template/upload.html"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetRatingsHtml() string {
+func RatingsHtml() string {
 	relativePath := "web/template/ratings.html"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetTempSolutions() string {
+func TempSolutions() string {
 	relativePath := "temp_solutions"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetParticipantSolution() string {
+func ParticipantSolution() string {
 	relativePath := "cmd/myapp/participant_solution/participant_solution.go"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetParticipantSolutionExe() string {
+func ParticipantSolutionExe() string {
 	relativePath := "cmd/myapp/participant_solution/participant_solution.exe"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetMainSolution() string {
+func MainSolution() string {
 	relativePath := "cmd/myapp/main_solution/main_solution.go"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetMainSolutionExe() string {
+func MainSolutionExe() string {
 	relativePath := "cmd/myapp/main_solution/main_solution.exe"
 	return absolutePath(relativePath)
 }
-func (fs *FileSystem) GetCleanFile() string {
+func CleanFile() string {
 	relativePath := "cmd/myapp/main_solution/clean.txt"
 	return absolutePath(relativePath)
 }
 
 func absolutePath(relativePath string) string {
 	return "C:/Users/User/Documents/Visual Studio/GoLang/test/" + relativePath
-}
-
-func GetInstance() *FileSystem {
-	if fileSystem == nil {
-		fileSystem = &FileSystem{
-			Tests: map[int]models.Validator{
-				1: {
-					ProblemId:    1,
-					SolutionFile: absolutePath("test/problems/0001/solution.go"),
-					TestCases: []models.TestCase{
-						{
-							InputFile: absolutePath("test/problems/0001/tests/1.txt"),
-						},
-						{
-							InputFile: absolutePath("test/problems/0001/tests/2.txt"),
-						},
-					},
-				},
-				2: {
-					ProblemId:    2,
-					SolutionFile: absolutePath("test/problems/0002/solution.go"),
-					TestCases: []models.TestCase{
-						{
-							InputFile: absolutePath("test/problems/0002/tests/1.txt"),
-						},
-						{
-							InputFile: absolutePath("test/problems/0002/tests/2.txt"),
-						},
-					},
-				},
-			},
-		}
-	}
-	return fileSystem
 }

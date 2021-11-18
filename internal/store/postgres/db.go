@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	_ "github.com/jackc/pgx/stdlib"
 	"site/internal/store"
+
+	_ "github.com/jackc/pgx/stdlib"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -12,6 +13,8 @@ type DB struct {
 
 	users       store.UserRepository
 	submissions store.SubmissionRepository
+	validators  store.ValidatorRepository
+	testCases   store.TestCaseRepository
 }
 
 func NewDB() store.Store {

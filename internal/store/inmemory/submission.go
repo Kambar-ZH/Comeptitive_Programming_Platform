@@ -16,7 +16,7 @@ type SubmissionRepo struct {
 }
 
 
-func (db *SubmissionRepo) All(ctx context.Context, offset, limit int) ([]*datastruct.Submission, error) {
+func (db *SubmissionRepo) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -36,32 +36,6 @@ func (db *SubmissionRepo) ById(ctx context.Context, id int) (*datastruct.Submiss
 	}
 
 	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("submission with id %d does not exist", id))
-}
-
-func (db *SubmissionRepo) ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	res := []*datastruct.Submission{}
-	for _, submission := range db.data {
-		if submission.ContestId == int32(contestId) {
-			res = append(res, submission)
-		}
-	}
-	return res, nil
-}
-
-func (db *SubmissionRepo) ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-
-	res := []*datastruct.Submission{}
-	for _, submission := range db.data {
-		if submission.AuthorHandle == handle {
-			res = append(res, submission)
-		}
-	}
-
-	return res, nil
 }
 
 func (db *SubmissionRepo) Create(ctx context.Context, submission *datastruct.Submission) error {

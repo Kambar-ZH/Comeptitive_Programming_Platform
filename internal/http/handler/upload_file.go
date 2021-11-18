@@ -1,28 +1,28 @@
 package handler
 
 import (
-	"log"
 	"net/http"
-	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/http/ioutils"
 	"site/internal/services"
 	"strconv"
-	"strings"
+	"sync"
 )
 
 type UploadFileHandler struct {
 	service services.UploadFileService
+	mu *sync.Mutex
 }
 
 func NewUploadFileHandler(opts ...UploadFileHandlerOption) *UploadFileHandler {
-	ufh := &UploadFileHandler{}
-	for _, v := range(opts) {
-		v(ufh)
+	uf := &UploadFileHandler{}
+	for _, v := range opts {
+		v(uf)
 	}
-	return ufh
+	return uf
 }
 
-func (ufh UploadFileHandler) UploadFile() http.HandlerFunc {
+func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 	type UploadViewData struct {
 		FileName    string
 		ProblemName int
@@ -41,36 +41,27 @@ func (ufh UploadFileHandler) UploadFile() http.HandlerFunc {
 		}
 		defer file.Close()
 
-		tempFileName, err := ufh.service.SaveInmemory(file)
-		if err != nil {
-			ioutils.Error(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
 		problemId, err := strconv.Atoi(r.FormValue("problemId"))
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		fileName := strings.ReplaceAll(tempFileName, "\\\\", "/")
-		log.Println(fileName)
-
-		subResult, err := ufh.service.TestSolution(fileName, problemId)
+		uf.mu.Lock()
+		submission, err := uf.service.UploadFile(r.Context(), &dto.UploadFileRequest{
+			ProblemId: problemId,
+			File:      file,
+		})
+		uf.mu.Unlock()
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		ufh.service.Create(r.Context(), &datastruct.Submission{
-			Id:           15, // hardcoded
-			ProblemId:    int32(problemId),
-			Verdict:      string(subResult.Verdict),
-		})
 
 		data := UploadViewData{
 			FileName:    handler.Filename,
 			ProblemName: problemId,
-			Verdict:     string(subResult.Verdict),
-			FailedTest:  int(subResult.FailedTest),
+			Verdict:     string(submission.Verdict),
+			FailedTest:  int(submission.FailedTest),
 		}
 
 		ioutils.Respond(w, r, http.StatusAccepted, data)

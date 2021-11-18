@@ -27,9 +27,9 @@ func UserFromCtx(ctx context.Context) *datastruct.User {
 	return ctx.Value(CtxKeyUser).(*datastruct.User)
 }
 
-func RequiredIf(cond bool) validation.RuleFunc {
+func RequiredIf(required bool) validation.RuleFunc {
 	return func(value interface{}) error {
-		if cond {
+		if required {
 			return validation.Validate(value, validation.Required)
 		}
 
@@ -55,7 +55,7 @@ func ComparePassword(user *datastruct.User, password string) bool {
 }
 
 func BeforeCreate(user *datastruct.User) error {
-	if len(user.Password) > 0 {
+	if len(user.Password) != 0 {
 		encryptedPassword, err := EncryptPassword(user.Password)
 		if err != nil {
 			return err

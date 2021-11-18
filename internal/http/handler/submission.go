@@ -50,7 +50,7 @@ func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
 		}
 		page = pageNum
 	}
-	submissions, err := sh.service.All(r.Context(), page)
+	submissions, err := sh.service.All(r.Context(), &datastruct.SubmissionQuery{Page: int32(page)})
 	if err != nil {
 		log.Println(err)
 		ioutils.Error(w, r, http.StatusInternalServerError, err)

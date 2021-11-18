@@ -5,22 +5,29 @@ import "site/internal/store"
 type UserServiceOption func(u *UserServiceImpl)
 type SubmissionServiceOption func(s *SubmissionServiceImpl)
 type UploadFileServiceOption func(s *UploadFileServiceImpl)
+type AuthServiceOption func(s *AuthServiceImpl)
 
 
-func WithUserRepo(repo store.UserRepository) UserServiceOption {
+func UserServiceWithStore(store store.Store) UserServiceOption {
 	return func(u *UserServiceImpl) {
-		u.repo = repo
+		u.store = store
 	}
 }
 
-func WithSubmissionRepo(repo store.SubmissionRepository) SubmissionServiceOption {
+func SubmissionServiceWithStore(store store.Store) SubmissionServiceOption {
 	return func(s *SubmissionServiceImpl) {
-		s.repo = repo
+		s.store = store
 	}
 }
 
-func UploadFileWithSubmissionRepo(repo store.SubmissionRepository) UploadFileServiceOption {
-	return func(s *UploadFileServiceImpl) {
-		s.repo = repo
+func UploadFileServiceWithStore(store store.Store) UploadFileServiceOption {
+	return func(uf *UploadFileServiceImpl) {
+		uf.store = store
+	}
+}
+
+func AuthServiceWithStore(store store.Store) AuthServiceOption {
+	return func(a *AuthServiceImpl) {
+		a.store = store
 	}
 }

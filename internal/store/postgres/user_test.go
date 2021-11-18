@@ -38,7 +38,7 @@ func TestUserRepository(t *testing.T) {
 	// CREATE
 
 	// ALL
-	users, err := store.Users().All(ctx, 0, 10)
+	users, err := store.Users().All(ctx, &datastruct.UserQuery{Offset: 0, Limit: 10})
 	if err != nil {
 		panic(err)
 	}

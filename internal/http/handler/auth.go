@@ -1,39 +1,52 @@
-package http
+package handler
 
 import (
 	"context"
 	"encoding/json"
-	"site/internal/middleware"
 	"net/http"
+	"site/internal/dto"
 	"site/internal/http/ioutils"
+	"site/internal/middleware"
+	"site/internal/services"
+
+	"github.com/gorilla/sessions"
 )
 
-func (s *Server) HandleSessionsCreate() http.HandlerFunc {
-	type request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+type AuthHandler struct {
+	service      services.AuthService
+	sessionStore sessions.Store
+}
+
+func NewAuthHandler(opts ...AuthHandlerOption) *AuthHandler {
+	ah := &AuthHandler{}
+	for _, v := range opts {
+		v(ah)
 	}
+	return ah
+}
+
+func (a AuthHandler) CreateSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
+		req := &dto.Cridentials{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			ioutils.Error(w, r, http.StatusBadRequest, err)
 			return
 		}
 
-		user, err := s.store.Users().ByEmail(s.ctx, req.Email)
-		if err != nil || !middleware.ComparePassword(user, req.Password) {
-			ioutils.Error(w, r, http.StatusUnauthorized, middleware.ErrIncorrectEmailOrPassword)
+		user, err := a.service.ByEmail(r.Context(), req)
+		if err != nil {
+			ioutils.Error(w, r, http.StatusUnauthorized, err)
 			return
 		}
 
-		session, err := s.sessionStore.Get(r, middleware.SessionName)
+		session, err := a.sessionStore.Get(r, middleware.SessionName)
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		session.Values["user_handle"] = user.Handle
-		if err := s.sessionStore.Save(r, w, session); err != nil {
+		if err := a.sessionStore.Save(r, w, session); err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
@@ -42,9 +55,9 @@ func (s *Server) HandleSessionsCreate() http.HandlerFunc {
 	}
 }
 
-func (s *Server) AuthenticateUser(next http.Handler) http.Handler {
+func (a AuthHandler) AuthenticateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := s.sessionStore.Get(r, middleware.SessionName)
+		session, err := a.sessionStore.Get(r, middleware.SessionName)
 		if err != nil {
 			ioutils.Error(w, r, http.StatusInternalServerError, err)
 			return
@@ -56,11 +69,17 @@ func (s *Server) AuthenticateUser(next http.Handler) http.Handler {
 			return
 		}
 		// TODO: CHECK THAT HANDLE IS STRING
-		user, err := s.store.Users().ByHandle(s.ctx, handle.(string))
+		user, err := a.service.ByHandle(r.Context(), handle.(string))
 		if err != nil {
 			ioutils.Error(w, r, http.StatusUnauthorized, middleware.ErrNotAuthenticated)
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), middleware.CtxKeyUser, user)))
 	})
+}
+
+func (a AuthHandler) HandleWhoami() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ioutils.Respond(w, r, http.StatusOK, middleware.UserFromCtx(r.Context()))
+	}
 }

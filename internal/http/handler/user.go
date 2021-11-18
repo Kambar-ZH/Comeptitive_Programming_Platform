@@ -49,7 +49,7 @@ func (uh *UserHandler) All(w http.ResponseWriter, r *http.Request) {
 		}
 		page = pageNum
 	}
-	users, err := uh.service.All(r.Context(), page)
+	users, err := uh.service.All(r.Context(), &datastruct.UserQuery{Page: int32(page)})
 	if err != nil {
 		log.Println(err)
 		ioutils.Error(w, r, http.StatusInternalServerError, err)

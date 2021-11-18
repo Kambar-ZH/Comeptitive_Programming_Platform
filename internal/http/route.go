@@ -18,7 +18,6 @@ func (s *Server) PrepareUserRoutes(r chi.Router, h *handler.UserHandler) {
 
 func (s *Server) PrepareSubmissionRoutes(r chi.Router, h *handler.SubmissionHandler) {
 	r.Route("/submissions", func(r chi.Router) {
-		r.Use(s.AuthenticateUser)
 		r.Post("/", h.Create)
 		r.Get("/", h.All)
 		r.Get("/{id}", h.ById)

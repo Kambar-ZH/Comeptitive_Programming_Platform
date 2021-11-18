@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"site/internal/datastruct"
-	"site/internal/store"
 	"site/internal/middleware"
+	"site/internal/store"
 )
 
 const (
@@ -12,9 +12,7 @@ const (
 )
 
 type SubmissionService interface {
-	All(ctx context.Context, page int) ([]*datastruct.Submission, error)
-	ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error)
-	ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error)
+	All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error)
 	ById(ctx context.Context, id int) (*datastruct.Submission, error)
 	Create(ctx context.Context, submission *datastruct.Submission) error
 	Update(ctx context.Context, submission *datastruct.Submission) error
@@ -22,7 +20,7 @@ type SubmissionService interface {
 }
 
 type SubmissionServiceImpl struct {
-	repo store.SubmissionRepository
+	store store.Store
 }
 
 func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
@@ -33,45 +31,35 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 	return svc
 }
 
-func (s SubmissionServiceImpl) ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error) {
-	return s.repo.ByContestId(ctx, contestId)
-}
-
-func (s SubmissionServiceImpl) All(ctx context.Context, page int) ([]*datastruct.Submission, error) {
-	return s.repo.All(ctx, (page-1)*submissionsPerPage, submissionsPerPage)
+func (s SubmissionServiceImpl) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
+	query.Limit = submissionsPerPage
+	query.Offset = (query.Page - 1) * submissionsPerPage
+	return s.store.Submissions().All(ctx, query)
 }
 
 func (s SubmissionServiceImpl) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
-	return s.repo.ById(ctx, id)
-}
-
-func (s SubmissionServiceImpl) ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error) {
-	return s.repo.ByAuthorHandle(ctx, handle)
+	return s.store.Submissions().ById(ctx, id)
 }
 
 func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
 	// TODO: ASSIGN USER TO SUBMISSION
-	_, err := s.repo.ById(ctx, int(submission.Id))
-	if err != nil {
-		return err
-	}
 	user := middleware.UserFromCtx(ctx)
 	submission.AuthorHandle = user.Handle
-	return s.repo.Create(ctx, submission)
+	return s.store.Submissions().Create(ctx, submission)
 }
 
 func (s SubmissionServiceImpl) Update(ctx context.Context, submission *datastruct.Submission) error {
-	_, err := s.repo.ById(ctx, int(submission.Id))
+	_, err := s.store.Submissions().ById(ctx, int(submission.Id))
 	if err != nil {
 		return err
 	}
-	return s.repo.Update(ctx, submission)
+	return s.store.Submissions().Update(ctx, submission)
 }
 
 func (s SubmissionServiceImpl) Delete(ctx context.Context, id int) error {
-	_, err := s.repo.ById(ctx, id)
+	_, err := s.store.Submissions().ById(ctx, id)
 	if err != nil {
 		return err
 	}
-	return s.repo.Delete(ctx, id)
+	return s.store.Submissions().Delete(ctx, id)
 }

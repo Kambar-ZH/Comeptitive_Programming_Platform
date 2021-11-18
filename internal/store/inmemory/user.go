@@ -15,9 +15,8 @@ type UserRepo struct {
 	mu   *sync.RWMutex
 }
 
-// db *UserRepo
 
-func (db *UserRepo) All(ctx context.Context, offset, limit int) ([]*datastruct.User, error) {
+func (db *UserRepo) All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 

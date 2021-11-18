@@ -23,9 +23,9 @@ func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
 	return &UserRepository{conn: conn}
 }
 
-func (u UserRepository) All(ctx context.Context, offset int, limit int) ([]*datastruct.User, error) {
+func (u UserRepository) All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error) {
 	users := make([]*datastruct.User, 0)
-	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET $1 LIMIT $2", offset, limit); err != nil {
+	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET $1 LIMIT $2", query.Offset, query.Limit); err != nil {
 		return nil, err
 	}
 	return users, nil

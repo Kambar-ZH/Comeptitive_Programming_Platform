@@ -23,9 +23,9 @@ func NewSubmissionRepository(conn *sqlx.DB) store.SubmissionRepository {
 	return &SubmissionRepository{conn: conn}
 }
 
-func (u SubmissionRepository) All(ctx context.Context, offset int, limit int) ([]*datastruct.Submission, error) {
+func (u SubmissionRepository) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
 	submissions := make([]*datastruct.Submission, 0)
-	if err := u.conn.Select(&submissions, "SELECT * FROM submissions OFFSET $1 LIMIT $2", offset, limit); err != nil {
+	if err := u.conn.Select(&submissions, "SELECT * FROM submissions OFFSET $1 LIMIT $2", query.Offset, query.Limit); err != nil {
 		return nil, err
 	}
 	return submissions, nil
@@ -37,22 +37,6 @@ func (u SubmissionRepository) ById(ctx context.Context, id int) (*datastruct.Sub
 		return nil, err
 	}
 	return submission, nil
-}
-
-func (u SubmissionRepository) ByContestId(ctx context.Context, contestId int) ([]*datastruct.Submission, error) {
-	submissions := make([]*datastruct.Submission, 0)
-	if err := u.conn.Select(&submissions, "SELECT * FROM submissions WHERE contest_id = $1", contestId); err != nil {
-		return nil, err
-	}
-	return submissions, nil
-}
-
-func (u SubmissionRepository) ByAuthorHandle(ctx context.Context, handle string) ([]*datastruct.Submission, error) {
-	submissions := make([]*datastruct.Submission, 0)
-	if err := u.conn.Get(&submissions, "SELECT * FROM submissions WHERE author_handle = $1", handle); err != nil {
-		return nil, err
-	}
-	return submissions, nil
 }
 
 func (u SubmissionRepository) Create(ctx context.Context, submission *datastruct.Submission) error {

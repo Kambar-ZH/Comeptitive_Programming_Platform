@@ -47,7 +47,7 @@ func (worker *Worker) CleanUp() error {
 	return nil
 }
 
-func (worker *Worker) RunTestCase(id int, testCase datastruct.TestCase) (dto.Verdict, error) {
+func (worker *Worker) RunTestCase(testCase datastruct.TestCase) (dto.Verdict, error) {
 	expected, err := tools.MustExecuteFile(worker.mainSolutionExe, testCase)
 	if err != nil {
 		log.Println("error on executing main solution")
@@ -60,10 +60,10 @@ func (worker *Worker) RunTestCase(id int, testCase datastruct.TestCase) (dto.Ver
 	}
 
 	if expected != actual {
-		log.Printf("[%d] incorrect result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
+		log.Printf("[%d] incorrect result on test:\nExpected: %s\nActual: %s\n", testCase.Id, expected, actual)
 		return dto.FAILED, err
 	}
 
-	log.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", id, expected, actual)
+	log.Printf("[%d] correct result on test:\nExpected: %s\nActual: %s\n", testCase.Id, expected, actual)
 	return dto.PASSED, err
 }

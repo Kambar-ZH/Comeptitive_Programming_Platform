@@ -1,7 +1,7 @@
 package http
 
 import (
-	"site/internal/http/handler"
+	"site/internal/handler"
 
 	"github.com/go-chi/chi"
 )

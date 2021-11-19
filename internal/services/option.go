@@ -1,16 +1,24 @@
 package services
 
-import "site/internal/store"
+import (
+	"site/internal/store"
+	"site/internal/store/cache"
+)
 
 type UserServiceOption func(u *UserServiceImpl)
 type SubmissionServiceOption func(s *SubmissionServiceImpl)
 type UploadFileServiceOption func(s *UploadFileServiceImpl)
 type AuthServiceOption func(s *AuthServiceImpl)
 
-
 func UserServiceWithStore(store store.Store) UserServiceOption {
 	return func(u *UserServiceImpl) {
 		u.store = store
+	}
+}
+
+func SubmissionServiceWithCache(cache cache.SubmissionCache) SubmissionServiceOption {
+	return func(s *SubmissionServiceImpl) {
+		s.cache = cache
 	}
 }
 

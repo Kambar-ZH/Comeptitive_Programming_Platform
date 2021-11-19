@@ -4,9 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"site/internal/http/handler"
+	"site/internal/handler"
 	"site/internal/services"
 	"site/internal/store"
+	"site/internal/store/cache"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -20,18 +21,20 @@ type Server struct {
 
 	store        store.Store
 	sessionStore sessions.Store
+	cache        cache.SubmissionCache
 
 	Address string
 }
 
-func NewServer(ctx context.Context, addres string, store store.Store, sessionStore sessions.Store) *Server {
-	return &Server{
-		ctx:          ctx,
-		Address:      addres,
-		store:        store,
-		idleConnsCh:  make(chan struct{}),
-		sessionStore: sessionStore,
+func NewServer(ctx context.Context, opts ...ServerOption) *Server {
+	srv := &Server{
+		ctx:         ctx,
+		idleConnsCh: make(chan struct{}),
 	}
+	for _, v := range opts {
+		v(srv)
+	}
+	return srv
 }
 
 func (s *Server) basicHandler() chi.Router {
@@ -39,7 +42,7 @@ func (s *Server) basicHandler() chi.Router {
 	r.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
 	us := services.NewUserService(services.UserServiceWithStore(s.store))
-	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store))
+	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store), services.SubmissionServiceWithCache(s.cache))
 	ufs := services.NewUploadFileService(services.UploadFileServiceWithStore(s.store))
 	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
 

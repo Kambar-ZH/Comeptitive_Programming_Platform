@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"site/internal/datastruct"
-	"site/internal/store"
 	"site/internal/middleware"
+	"site/internal/store"
 )
 
 const (
@@ -35,7 +35,8 @@ func NewUserService(opts ...UserServiceOption) UserService {
 func (u UserServiceImpl) All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error) {
 	query.Limit = usersPerPage
 	query.Offset = (query.Page - 1) * usersPerPage
-	return u.store.Users().All(ctx, query)
+	users, err := u.store.Users().All(ctx, query)
+	return users, err
 }
 
 func (u UserServiceImpl) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
@@ -54,6 +55,7 @@ func (u UserServiceImpl) Create(ctx context.Context, user *datastruct.User) erro
 		return err
 	}
 	middleware.Sanitize(user)
+
 	return u.store.Users().Create(ctx, user)
 }
 

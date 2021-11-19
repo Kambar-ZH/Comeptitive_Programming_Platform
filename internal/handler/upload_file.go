@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"site/internal/dto"
-	"site/internal/http/ioutils"
 	"site/internal/services"
 	"strconv"
 )
@@ -34,14 +33,14 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 
 		file, handler, err := r.FormFile("myFile")
 		if err != nil {
-			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		defer file.Close()
 
 		problemId, err := strconv.Atoi(r.FormValue("problemId"))
 		if err != nil {
-			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		submission, err := uf.service.UploadFile(r.Context(), &dto.UploadFileRequest{
@@ -49,7 +48,7 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			File:      file,
 		})
 		if err != nil {
-			ioutils.Error(w, r, http.StatusInternalServerError, err)
+			Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -60,6 +59,6 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			FailedTest:  int(submission.FailedTest),
 		}
 
-		ioutils.Respond(w, r, http.StatusAccepted, data)
+		Respond(w, r, http.StatusAccepted, data)
 	}
 }

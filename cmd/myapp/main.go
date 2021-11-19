@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"site/internal/http"
+	"site/internal/store/cache"
 	"site/internal/store/postgres"
 	"syscall"
 
@@ -23,6 +24,11 @@ func main() {
 	}
 	defer store.Close()
 
+	cache := cache.NewRedisCache(
+		"localhost:6379",
+		0,
+		10,
+	)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := make(chan os.Signal)
@@ -33,7 +39,14 @@ func main() {
 	}()
 
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
-	srv := http.NewServer(ctx, ":8080", store, sessionStore)
+
+	srv := http.NewServer(
+		ctx,
+		http.WithAddress(":8080"),
+		http.WithStore(store),
+		http.WithSessionStore(sessionStore),
+		http.WithCache(cache),
+	)
 
 	if err := srv.Run(); err != nil {
 		log.Println(err)

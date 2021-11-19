@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"site/internal/datastruct"
 	"site/internal/store"
 
@@ -25,6 +26,15 @@ func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
 
 func (u UserRepository) All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error) {
 	users := make([]*datastruct.User, 0)
+	basicQuery := "SELECT * FROM users"
+	if query.Filter != "" {
+		basicQuery = fmt.Sprintf("%s WHERE handle ILIKE $1 OFFSET $2 LIMIT $3", basicQuery)
+
+		if err := u.conn.Select(&users, basicQuery, "%"+query.Filter+"%", query.Offset, query.Limit); err != nil {
+			return nil, err
+		}
+		return users, nil
+	}
 	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET $1 LIMIT $2", query.Offset, query.Limit); err != nil {
 		return nil, err
 	}

@@ -33,9 +33,9 @@ func (u UploadFileServiceImpl) RunPool() {
 func NewUploadFileService(opts ...UploadFileServiceOption) UploadFileService {
 	svc := &UploadFileServiceImpl{
 		tasks: make(chan *Task, 100),
-		workers: []*Worker{
+		workers: []*Worker{ // can add more workers
 			{
-				command:                "all",
+				command:                "run1",
 				cleanFile:              inmemory.AbsolutePath("cmd/myapp/main_solution/clean.txt"),
 				mainSolution:           inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.go"),
 				mainSolutionExe:        inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.exe"),
@@ -47,6 +47,7 @@ func NewUploadFileService(opts ...UploadFileServiceOption) UploadFileService {
 	for _, v := range opts {
 		v(svc)
 	}
+	svc.RunPool()
 	return svc
 }
 
@@ -124,8 +125,8 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, worker *Worker,
 	}
 
 	defer worker.CleanUp()
-	for id, testCase := range validator.TestCases {
-		verdict, err := worker.RunTestCase(id+1, testCase)
+	for _, testCase := range validator.TestCases {
+		verdict, err := worker.RunTestCase(testCase)
 		if err != nil {
 			return nil, err
 		}

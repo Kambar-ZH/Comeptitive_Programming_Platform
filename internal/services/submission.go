@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"site/internal/cache"
 	"site/internal/datastruct"
 	"site/internal/middleware"
 	"site/internal/store"
-	"site/internal/store/cache"
 )
 
 const (
@@ -24,7 +24,7 @@ type SubmissionService interface {
 
 type SubmissionServiceImpl struct {
 	store store.Store
-	cache cache.SubmissionCache
+	cache cache.Cache
 }
 
 func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
@@ -37,7 +37,7 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 
 func (s SubmissionServiceImpl) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
 	if query.Filter != "" {
-		submissions, err := s.cache.GetAll(query.Filter)
+		submissions, err := s.cache.Submissions().GetAll(query.Filter)
 		if err != nil {
 			log.Println(err)
 		} else {
@@ -50,7 +50,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, query *datastruct.Submis
 	submissions, err := s.store.Submissions().All(ctx, query)
 	if query.Filter != "" {
 		log.Println("Saved to Redis!")
-		if err := s.cache.SetAll(query.Filter, submissions); err != nil {
+		if err := s.cache.Submissions().SetAll(query.Filter, submissions); err != nil {
 			log.Println(err)
 		}
 	}
@@ -58,7 +58,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, query *datastruct.Submis
 }
 
 func (s SubmissionServiceImpl) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
-	submission, err := s.cache.Get(fmt.Sprintf("%d", id))
+	submission, err := s.cache.Submissions().Get(fmt.Sprintf("%d", id))
 	if err != nil {
 		log.Println(err)
 	} else {
@@ -66,7 +66,7 @@ func (s SubmissionServiceImpl) ById(ctx context.Context, id int) (*datastruct.Su
 		return submission, nil
 	}
 	submission, err = s.store.Submissions().ById(ctx, id)
-	if cacheErr := s.cache.Set(fmt.Sprintf("%d", id), submission); cacheErr != nil {
+	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", id), submission); cacheErr != nil {
 		log.Println(cacheErr)
 	}
 	return submission, err
@@ -76,7 +76,7 @@ func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruc
 	// TODO: ASSIGN USER TO SUBMISSION
 	user := middleware.UserFromCtx(ctx)
 	submission.AuthorHandle = user.Handle
-	if cacheErr := s.cache.Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
+	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
 		log.Println(cacheErr)
 	}
 	return s.store.Submissions().Create(ctx, submission)
@@ -87,7 +87,7 @@ func (s SubmissionServiceImpl) Update(ctx context.Context, submission *datastruc
 	if err != nil {
 		return err
 	}
-	if cacheErr := s.cache.Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
+	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
 		log.Println(cacheErr)
 	}
 	return s.store.Submissions().Update(ctx, submission)
@@ -98,5 +98,6 @@ func (s SubmissionServiceImpl) Delete(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
+	s.cache.Submissions().Del(fmt.Sprintf("%d", id))
 	return s.store.Submissions().Delete(ctx, id)
 }

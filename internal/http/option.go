@@ -2,7 +2,7 @@ package http
 
 import (
 	"site/internal/store"
-	"site/internal/store/cache"
+	"site/internal/cache"
 
 	"github.com/gorilla/sessions"
 )
@@ -27,7 +27,7 @@ func WithSessionStore(sessionStore sessions.Store) ServerOption {
 	}
 }
 
-func WithCache(cache cache.SubmissionCache) ServerOption {
+func WithCache(cache cache.Cache) ServerOption {
 	return func(srv *Server) {
 		srv.cache = cache
 	}

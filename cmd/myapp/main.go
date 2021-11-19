@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"site/internal/http"
-	"site/internal/store/cache"
+	"site/internal/cache/redis"
 	"site/internal/store/postgres"
 	"syscall"
 
@@ -24,11 +24,8 @@ func main() {
 	}
 	defer store.Close()
 
-	cache := cache.NewRedisCache(
-		"localhost:6379",
-		0,
-		10,
-	)
+	cache := redis.NewCache()
+	cache.Connect("localhost:6379", 0, 10)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := make(chan os.Signal)

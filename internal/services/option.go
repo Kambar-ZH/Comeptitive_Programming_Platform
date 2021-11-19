@@ -2,7 +2,7 @@ package services
 
 import (
 	"site/internal/store"
-	"site/internal/store/cache"
+	"site/internal/cache"
 )
 
 type UserServiceOption func(u *UserServiceImpl)
@@ -16,7 +16,7 @@ func UserServiceWithStore(store store.Store) UserServiceOption {
 	}
 }
 
-func SubmissionServiceWithCache(cache cache.SubmissionCache) SubmissionServiceOption {
+func SubmissionServiceWithCache(cache cache.Cache) SubmissionServiceOption {
 	return func(s *SubmissionServiceImpl) {
 		s.cache = cache
 	}

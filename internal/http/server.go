@@ -7,7 +7,7 @@ import (
 	"site/internal/handler"
 	"site/internal/services"
 	"site/internal/store"
-	"site/internal/store/cache"
+	"site/internal/cache"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -21,7 +21,7 @@ type Server struct {
 
 	store        store.Store
 	sessionStore sessions.Store
-	cache        cache.SubmissionCache
+	cache        cache.Cache
 
 	Address string
 }

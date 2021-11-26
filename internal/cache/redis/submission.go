@@ -3,18 +3,18 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"site/internal/datastruct"
+	"fmt"
 	"site/internal/cache"
+	"site/internal/datastruct"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 )
 
 type SubmissionCache struct {
-	client *redis.Client
+	client  *redis.Client
 	expires time.Duration
 }
-
 
 func (cache *Cache) Submissions() cache.SubmissionCache {
 	if cache.submissions == nil {
@@ -25,23 +25,23 @@ func (cache *Cache) Submissions() cache.SubmissionCache {
 
 func NewSubmissionCache(client *redis.Client) cache.SubmissionCache {
 	return &SubmissionCache{
-		client: client,
+		client:  client,
 		expires: 10,
 	}
 }
 
-func (cache *SubmissionCache) Set(key string, value *datastruct.Submission) error {
+func (s *SubmissionCache) Set(key interface{}, value *datastruct.Submission) error {
 	json, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 
-	cache.client.Set(context.Background(), key, json, cache.expires*time.Second)
+	s.client.Set(context.Background(), fmt.Sprintf("%v", key), json, s.expires*time.Second)
 	return nil
 }
 
-func (cache *SubmissionCache) Get(key string) (*datastruct.Submission, error) {
-	val, err := cache.client.Get(context.Background(), key).Result()
+func (s *SubmissionCache) Get(key interface{}) (*datastruct.Submission, error) {
+	val, err := s.client.Get(context.Background(), fmt.Sprintf("%v", key)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -54,18 +54,18 @@ func (cache *SubmissionCache) Get(key string) (*datastruct.Submission, error) {
 	return submission, nil
 }
 
-func (cache *SubmissionCache) SetAll(key string, value []*datastruct.Submission) error {
+func (s *SubmissionCache) SetAll(key interface{}, value []*datastruct.Submission) error {
 	json, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 
-	cache.client.Set(context.Background(), key+"all_users", json, cache.expires*time.Second)
+	s.client.Set(context.Background(), fmt.Sprintf("all_users%v", key), json, s.expires*time.Second)
 	return nil
 }
 
-func (cache *SubmissionCache) GetAll(key string) ([]*datastruct.Submission, error) {
-	val, err := cache.client.Get(context.Background(), key+"all_users").Result()
+func (s *SubmissionCache) GetAll(key interface{}) ([]*datastruct.Submission, error) {
+	val, err := s.client.Get(context.Background(), fmt.Sprintf("all_users%v", key)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,6 @@ func (cache *SubmissionCache) GetAll(key string) ([]*datastruct.Submission, erro
 	return submissions, nil
 }
 
-func (cache *SubmissionCache) Del(key string) error {
-	return cache.client.Del(context.Background(), key).Err()
+func (s *SubmissionCache) Del(key interface{}) error {
+	return s.client.Del(context.Background(), fmt.Sprintf("%v", key)).Err()
 }

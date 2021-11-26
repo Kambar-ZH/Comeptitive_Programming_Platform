@@ -11,9 +11,9 @@ type Cache interface {
 }
 
 type SubmissionCache interface {
-	Set(key string, value *datastruct.Submission) error
-	Get(key string) (*datastruct.Submission, error)
-	Del(key string) error
-	SetAll(key string, value []*datastruct.Submission) error
-	GetAll(key string) ([]*datastruct.Submission, error)
+	Set(key interface{}, value *datastruct.Submission) error
+	Get(key interface{}) (*datastruct.Submission, error)
+	Del(key interface{}) error
+	SetAll(key interface{}, value []*datastruct.Submission) error
+	GetAll(key interface{}) ([]*datastruct.Submission, error)
 }

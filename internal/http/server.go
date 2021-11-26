@@ -5,14 +5,15 @@ import (
 	"log"
 	"net/http"
 	"site/internal/handler"
+	messagebroker "site/internal/message_broker"
 	"site/internal/services"
 	"site/internal/store"
-	"site/internal/cache"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 type Server struct {
@@ -21,7 +22,8 @@ type Server struct {
 
 	store        store.Store
 	sessionStore sessions.Store
-	cache        cache.Cache
+	cache        *lru.TwoQueueCache
+	broker       messagebroker.MessageBroker
 
 	Address string
 }
@@ -42,7 +44,7 @@ func (s *Server) basicHandler() chi.Router {
 	r.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
 	us := services.NewUserService(services.UserServiceWithStore(s.store))
-	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store), services.SubmissionServiceWithCache(s.cache))
+	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store), services.SubmissionServiceWithBroker(s.broker), services.SubmissionServiceWithCache(s.cache))
 	ufs := services.NewUploadFileService(services.UploadFileServiceWithStore(s.store))
 	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
 

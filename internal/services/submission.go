@@ -2,12 +2,13 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"site/internal/cache"
 	"site/internal/datastruct"
+	messagebroker "site/internal/message_broker"
 	"site/internal/middleware"
 	"site/internal/store"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -23,8 +24,9 @@ type SubmissionService interface {
 }
 
 type SubmissionServiceImpl struct {
-	store store.Store
-	cache cache.Cache
+	store  store.Store
+	cache  *lru.TwoQueueCache
+	broker messagebroker.MessageBroker
 }
 
 func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
@@ -36,49 +38,43 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 }
 
 func (s SubmissionServiceImpl) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
-	if query.Filter != "" {
-		submissions, err := s.cache.Submissions().GetAll(query.Filter)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("Redis ok!")
+	if value, ok := s.cache.Get(query.Filter); ok {
+		if submissions, ok := value.([]*datastruct.Submission); ok {
+			log.Println("The result of cache", submissions)
 			return submissions, nil
 		}
 	}
 	query.Limit = submissionsPerPage
 	query.Offset = (query.Page - 1) * submissionsPerPage
 	submissions, err := s.store.Submissions().All(ctx, query)
-	if query.Filter != "" {
-		log.Println("Saved to Redis!")
-		if err := s.cache.Submissions().SetAll(query.Filter, submissions); err != nil {
-			log.Println(err)
-		}
-	}
+	log.Println("Successfully cached!")
+	s.cache.Add(query.Filter, submissions)
 	return submissions, err
 }
 
 func (s SubmissionServiceImpl) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
-	submission, err := s.cache.Submissions().Get(fmt.Sprintf("%d", id))
-	if err != nil {
-		log.Println(err)
-	} else {
-		log.Println("Redis ok!")
-		return submission, nil
+	value, ok := s.cache.Get(id)
+	if ok {
+		if submission, ok := value.(*datastruct.Submission); ok {
+			log.Println("The result of cache", *submission)
+			return submission, nil
+		}
 	}
-	submission, err = s.store.Submissions().ById(ctx, id)
-	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", id), submission); cacheErr != nil {
-		log.Println(cacheErr)
-	}
+	submission, err := s.store.Submissions().ById(ctx, id)
+	log.Println("Successfully cached!")
+	s.cache.Add(id, submission)
 	return submission, err
 }
 
 func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
 	// TODO: ASSIGN USER TO SUBMISSION
-	user := middleware.UserFromCtx(ctx)
-	submission.AuthorHandle = user.Handle
-	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
-		log.Println(cacheErr)
+	user, ok := middleware.UserFromCtx(ctx)
+	if !ok {
+		return middleware.ErrNotAuthenticated
 	}
+	submission.AuthorHandle = user.Handle
+	log.Println("Cache was purged")
+	s.broker.Cache().Purge()
 	return s.store.Submissions().Create(ctx, submission)
 }
 
@@ -87,9 +83,8 @@ func (s SubmissionServiceImpl) Update(ctx context.Context, submission *datastruc
 	if err != nil {
 		return err
 	}
-	if cacheErr := s.cache.Submissions().Set(fmt.Sprintf("%d", submission.Id), submission); cacheErr != nil {
-		log.Println(cacheErr)
-	}
+	log.Printf("Submission with %d was removed from cache\n", submission.Id)
+	s.broker.Cache().Remove(submission.Id)
 	return s.store.Submissions().Update(ctx, submission)
 }
 
@@ -98,6 +93,7 @@ func (s SubmissionServiceImpl) Delete(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-	s.cache.Submissions().Del(fmt.Sprintf("%d", id))
+	s.broker.Cache().Remove(id)
+	log.Printf("Submission with %d was removed from cache\n", id)
 	return s.store.Submissions().Delete(ctx, id)
 }

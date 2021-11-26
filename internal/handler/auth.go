@@ -79,6 +79,7 @@ func (a AuthHandler) AuthenticateUser(next http.Handler) http.Handler {
 
 func (a AuthHandler) HandleWhoami() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		Respond(w, r, http.StatusOK, middleware.UserFromCtx(r.Context()))
+		user, _ := middleware.UserFromCtx(r.Context())
+		Respond(w, r, http.StatusOK, user)
 	}
 }

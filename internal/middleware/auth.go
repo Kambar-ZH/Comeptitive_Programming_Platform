@@ -23,8 +23,9 @@ var (
 	ErrNotAuthenticated         = fmt.Errorf("not authenticated")
 )
 
-func UserFromCtx(ctx context.Context) *datastruct.User {
-	return ctx.Value(CtxKeyUser).(*datastruct.User)
+func UserFromCtx(ctx context.Context) (*datastruct.User, bool) {
+	user, ok := ctx.Value(CtxKeyUser).(*datastruct.User)
+	return user, ok
 }
 
 func RequiredIf(required bool) validation.RuleFunc {

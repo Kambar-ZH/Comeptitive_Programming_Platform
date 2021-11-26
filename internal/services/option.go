@@ -1,8 +1,11 @@
 package services
 
 import (
+	"log"
+	messagebroker "site/internal/message_broker"
 	"site/internal/store"
-	"site/internal/cache"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 type UserServiceOption func(u *UserServiceImpl)
@@ -16,9 +19,16 @@ func UserServiceWithStore(store store.Store) UserServiceOption {
 	}
 }
 
-func SubmissionServiceWithCache(cache cache.Cache) SubmissionServiceOption {
+func SubmissionServiceWithCache(cache *lru.TwoQueueCache) SubmissionServiceOption {
 	return func(s *SubmissionServiceImpl) {
 		s.cache = cache
+	}
+}
+
+func SubmissionServiceWithBroker(broker messagebroker.MessageBroker) SubmissionServiceOption {
+	log.Println("FIINE!")
+	return func(s *SubmissionServiceImpl) {
+		s.broker = broker
 	}
 }
 

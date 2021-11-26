@@ -6,11 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"site/internal/http"
-	"site/internal/cache/redis"
+	"site/internal/message_broker/kafka"
 	"site/internal/store/postgres"
 	"syscall"
 
 	"github.com/gorilla/sessions"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -24,18 +25,22 @@ func main() {
 	}
 	defer store.Close()
 
-	cache := redis.NewCache()
-	cache.Connect("localhost:6379", 0, 10)
+	cache, err := lru.New2Q(6)
+	if err != nil {
+		panic(err)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		cancel()
-	}()
-
+	go CatchTermination(cancel)
+	
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
+
+	brokers := []string{"localhost:29092"}
+	broker := kafka.NewBroker(brokers, cache, "peer1")
+	if err := broker.Connect(ctx); err != nil {
+		panic(err)
+	}
+	defer broker.Close()
 
 	srv := http.NewServer(
 		ctx,
@@ -43,6 +48,7 @@ func main() {
 		http.WithStore(store),
 		http.WithSessionStore(sessionStore),
 		http.WithCache(cache),
+		http.WithBroker(broker),
 	)
 
 	if err := srv.Run(); err != nil {
@@ -50,4 +56,13 @@ func main() {
 	}
 
 	srv.WaitForGracefulTermination()
+}
+
+func CatchTermination(cancel context.CancelFunc) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	log.Print("[WARN] caught termination signal")
+	cancel()
 }

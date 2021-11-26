@@ -1,10 +1,11 @@
 package http
 
 import (
+	messagebroker "site/internal/message_broker"
 	"site/internal/store"
-	"site/internal/cache"
 
 	"github.com/gorilla/sessions"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 type ServerOption func(srv *Server)
@@ -27,8 +28,14 @@ func WithSessionStore(sessionStore sessions.Store) ServerOption {
 	}
 }
 
-func WithCache(cache cache.Cache) ServerOption {
+func WithCache(cache *lru.TwoQueueCache) ServerOption {
 	return func(srv *Server) {
 		srv.cache = cache
+	}
+}
+
+func WithBroker(broker messagebroker.MessageBroker) ServerOption {
+	return func(srv *Server) {
+		srv.broker = broker
 	}
 }

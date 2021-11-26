@@ -57,7 +57,11 @@ func (u UploadFileServiceImpl) Create(ctx context.Context, submission *datastruc
 	if err != nil {
 		return err
 	}
-	user := middleware.UserFromCtx(ctx)
+	user, ok := middleware.UserFromCtx(ctx)
+	if !ok {
+		log.Println("VERRRYYY BADAAAAA")
+		return middleware.ErrNotAuthenticated
+	}
 	submission.AuthorHandle = user.Handle
 	return u.store.Submissions().Create(ctx, submission)
 }

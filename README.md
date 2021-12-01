@@ -25,7 +25,8 @@ cd deployments\kafka
 "C:\Program Files\Docker\Docker\DockerCli.exe" -SwitchDaemon
 docker compose up
 ```
+Again on new terminal, from the root of the project:
 ```bash
-cd ..\..\cmd\myapp
+cd cmd\myapp
 go run main.go
 ```

@@ -26,6 +26,6 @@ cd deployments\kafka
 docker compose up
 ```
 ```bash
-cd ../../cmd/myapp
+cd ..\..\cmd\myapp
 go run main.go
 ```

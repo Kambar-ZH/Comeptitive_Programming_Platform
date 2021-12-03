@@ -13,6 +13,7 @@ type DB struct {
 
 	users       store.UserRepository
 	submissions store.SubmissionRepository
+	contests    store.ContestRepository
 	validators  store.ValidatorRepository
 	testCases   store.TestCaseRepository
 }

@@ -39,3 +39,11 @@ type ValidatorRepository interface {
 type TestCaseRepository interface {
 	ByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error)
 }
+
+type ContestRepository interface {
+	All(ctx context.Context, query *datastruct.ContestQuery) ([]*datastruct.Contest, error)
+	ById(ctx context.Context, id int) (*datastruct.Contest, error)
+	Create(ctx context.Context, contest *datastruct.Contest) error
+	Update(ctx context.Context, contest *datastruct.Contest) error
+	Delete(ctx context.Context, id int) error
+}

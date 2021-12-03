@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"site/internal/datastruct"
+	"site/internal/middleware"
 	"site/internal/services"
-	"strconv"
 
 	"github.com/go-chi/chi"
 )
@@ -37,17 +37,10 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) All(w http.ResponseWriter, r *http.Request) {
-	query := &datastruct.UserQuery{Page: 1}
-	pageStr := r.URL.Query().Get("page")
-	if pageStr != "" {
-		pageNum, err := strconv.Atoi(pageStr)
-		if err != nil {
-			Error(w, r, http.StatusBadRequest, err)
-			return
-		}
-		query.Page = int32(pageNum)
+	query := &datastruct.UserQuery{
+		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
-	query.Filter = r.URL.Query().Get("filter")
 
 	users, err := uh.service.All(r.Context(), query)
 	if err != nil {

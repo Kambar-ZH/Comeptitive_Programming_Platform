@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	messagebroker "site/internal/message_broker"
 	"site/internal/store"
 
@@ -26,7 +25,6 @@ func SubmissionServiceWithCache(cache *lru.TwoQueueCache) SubmissionServiceOptio
 }
 
 func SubmissionServiceWithBroker(broker messagebroker.MessageBroker) SubmissionServiceOption {
-	log.Println("FIINE!")
 	return func(s *SubmissionServiceImpl) {
 		s.broker = broker
 	}

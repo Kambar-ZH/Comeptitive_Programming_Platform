@@ -46,7 +46,7 @@ func (worker *Worker) CleanUp() error {
 	}
 	return nil
 }
-
+ 
 func (worker *Worker) RunTestCase(testCase datastruct.TestCase) (dto.Verdict, error) {
 	expected, err := tools.MustExecuteFile(worker.mainSolutionExe, testCase)
 	if err != nil {

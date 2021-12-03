@@ -54,13 +54,14 @@ func (s *Server) basicHandler() chi.Router {
 	ah := handler.NewAuthHandler(handler.WithAuthService(as), handler.WithSessionStore(s.sessionStore))
 
 	s.PrepareUserRoutes(r, uh)
-	s.PrepareSubmissionRoutes(r, sh)
-	s.PrepareUploadFileRoutes(r, ufh)
 
 	r.HandleFunc("/sessions", ah.CreateSession())
-	r.Route("/private", func(r chi.Router) {
+	r.Route("/contests", func(r chi.Router) {
 		r.Use(ah.AuthenticateUser)
-		r.HandleFunc("/whoami", ah.HandleWhoami())
+		r.Route("/{contestId}", func(r chi.Router) {
+			s.PrepareSubmissionRoutes(r, sh)
+			s.PrepareUploadFileRoutes(r, ufh)
+		})
 	})
 	return r
 }

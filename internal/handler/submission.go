@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"site/internal/datastruct"
+	"site/internal/middleware"
 	"site/internal/services"
 	"strconv"
 
@@ -39,18 +40,10 @@ func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
-	query := &datastruct.SubmissionQuery{Page: 1}
-	pageStr := r.URL.Query().Get("page")
-	if pageStr != "" {
-		pageNum, err := strconv.Atoi(pageStr)
-		if err != nil {
-			Error(w, r, http.StatusBadRequest, err)
-			return
-		}
-		query.Page = int32(pageNum)
+	query := &datastruct.SubmissionQuery{
+		Page: r.Context().Value(middleware.CtxKeyPage).(int32),
+		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
-
-	query.Filter = r.URL.Query().Get("filter")
 
 	submissions, err := sh.service.All(r.Context(), query)
 	if err != nil {

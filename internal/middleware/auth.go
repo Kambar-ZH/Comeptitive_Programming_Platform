@@ -10,12 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type ctxKey int8
-
 const (
 	SessionName        = "gopherschool"
-	CtxKeyUser  ctxKey = iota
-	CtxKeyRequestID
 )
 
 var (

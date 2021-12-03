@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+
+// Copy to file with path f1Path the content of file located in f2Path
 func CopyFile(f1Path, f2Path string) error {
 	file, err := os.Create(f1Path)
 	if err != nil {
@@ -31,6 +33,7 @@ func CopyFile(f1Path, f2Path string) error {
 	return nil
 }
 
+// Run makefile with given command, build executable
 func BuildExe(command string) error {
 	cmd := exec.Command("make", command)
 	var out bytes.Buffer
@@ -42,6 +45,7 @@ func BuildExe(command string) error {
 	return nil
 }
 
+// Run executable file
 func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 	cmd := exec.Command(fPath)
 
@@ -88,6 +92,7 @@ func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 	return string(result), nil
 }
 
+// Run executable file, if program doesn't halt, finish after 3 seconds
 func MustExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 	ch, errorCh := make(chan string), make(chan error)
 

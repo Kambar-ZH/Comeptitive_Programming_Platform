@@ -30,3 +30,4 @@ Again on new terminal, from the root of the project:
 cd cmd\myapp
 go run main.go
 ```
+[Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)

@@ -16,7 +16,7 @@ type SubmissionRepo struct {
 }
 
 
-func (db *SubmissionRepo) All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error) {
+func (db *SubmissionRepo) All(ctx context.Context, query *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 

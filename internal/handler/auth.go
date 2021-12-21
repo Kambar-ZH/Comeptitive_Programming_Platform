@@ -67,7 +67,6 @@ func (a AuthHandler) AuthenticateUser(next http.Handler) http.Handler {
 			Error(w, r, http.StatusUnauthorized, middleware.ErrNotAuthenticated)
 			return
 		}
-		// TODO: CHECK THAT HANDLE IS STRING
 		user, err := a.service.ByHandle(r.Context(), handle.(string))
 		if err != nil {
 			Error(w, r, http.StatusUnauthorized, middleware.ErrNotAuthenticated)

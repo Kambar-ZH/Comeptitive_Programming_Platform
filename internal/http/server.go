@@ -4,14 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"site/internal/handler"
 	messagebroker "site/internal/message_broker"
-	"site/internal/services"
 	"site/internal/store"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -37,33 +33,6 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 		v(srv)
 	}
 	return srv
-}
-
-func (s *Server) basicHandler() chi.Router {
-	r := chi.NewRouter()
-	r.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
-
-	us := services.NewUserService(services.UserServiceWithStore(s.store))
-	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store), services.SubmissionServiceWithBroker(s.broker), services.SubmissionServiceWithCache(s.cache))
-	ufs := services.NewUploadFileService(services.UploadFileServiceWithStore(s.store))
-	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
-
-	uh := handler.NewUserHandler(handler.WithUserService(us))
-	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
-	ufh := handler.NewUploadFileHandler(handler.WithUploadFileService(ufs))
-	ah := handler.NewAuthHandler(handler.WithAuthService(as), handler.WithSessionStore(s.sessionStore))
-
-	s.PrepareUserRoutes(r, uh)
-
-	r.HandleFunc("/sessions", ah.CreateSession())
-	r.Route("/contests", func(r chi.Router) {
-		r.Use(ah.AuthenticateUser)
-		r.Route("/{contestId}", func(r chi.Router) {
-			s.PrepareSubmissionRoutes(r, sh)
-			s.PrepareUploadFileRoutes(r, ufh)
-		})
-	})
-	return r
 }
 
 func (s *Server) Run() error {

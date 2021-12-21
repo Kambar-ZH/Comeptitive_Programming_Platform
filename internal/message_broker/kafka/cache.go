@@ -108,6 +108,7 @@ func (c *CacheBroker) Remove(key interface{}) error {
 		Topic: cacheTopic,
 		Value: sarama.StringEncoder(msgRaw),
 	})
+	
 	if err != nil {
 		return err
 	}

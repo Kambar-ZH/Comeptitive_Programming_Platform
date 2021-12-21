@@ -40,12 +40,19 @@ func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
-	query := &datastruct.SubmissionQuery{
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
+	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	req := &datastruct.SubmissionAllRequest{
 		Page: r.Context().Value(middleware.CtxKeyPage).(int32),
 		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		ContestId: int32(contestId),
 	}
 
-	submissions, err := sh.service.All(r.Context(), query)
+	submissions, err := sh.service.All(r.Context(), req)
 	if err != nil {
 		log.Println(err)
 		Error(w, r, http.StatusInternalServerError, err)
@@ -61,7 +68,16 @@ func (sh *SubmissionHandler) ById(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	submission, err := sh.service.ById(r.Context(), id)
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
+	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	submission, err := sh.service.ById(r.Context(), &datastruct.SubmissionByIdRequest{
+		SubmissionId: int32(id),
+		ContestId: int32(contestId),
+	})
 	if err != nil {
 		Error(w, r, http.StatusNotFound, err)
 		return
@@ -75,8 +91,16 @@ func (sh *SubmissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	err := sh.service.Update(r.Context(), submission)
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
 	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if err := sh.service.Update(r.Context(), &datastruct.SubmissionUpdateRequest{
+		Submission: submission,
+		ContestId: int32(contestId),
+	}); err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
@@ -90,9 +114,18 @@ func (sh *SubmissionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	if err = sh.service.Delete(r.Context(), id); err != nil {
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
+	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if err = sh.service.Delete(r.Context(), &datastruct.SubmissionDeleteRequest{
+		SubmissionId: int32(id),
+		ContestId: int32(contestId),
+	}); err != nil {
 		Error(w, r, http.StatusNotFound, err)
 		return
 	}
-	Respond(w, r, http.StatusOK, "")
+	Respond(w, r, http.StatusOK, nil)
 }

@@ -75,7 +75,7 @@ func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 		return "", err
 	}
 
-	input, err := os.ReadFile(tCase.InputFilePath)
+	input, err := os.ReadFile(tCase.TestFile)
 	if err != nil {
 		return "", err
 	}

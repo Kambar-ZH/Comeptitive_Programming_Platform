@@ -13,6 +13,7 @@ type Store interface {
 	Submissions() SubmissionRepository
 	Validators() ValidatorRepository
 	TestCases() TestCaseRepository
+	Contests() ContestRepository
 }
 
 type UserRepository interface {
@@ -25,7 +26,7 @@ type UserRepository interface {
 }
 
 type SubmissionRepository interface {
-	All(ctx context.Context, query *datastruct.SubmissionQuery) ([]*datastruct.Submission, error)
+	All(ctx context.Context, query *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
 	ById(ctx context.Context, id int) (*datastruct.Submission, error)
 	Create(ctx context.Context, submission *datastruct.Submission) error
 	Update(ctx context.Context, submission *datastruct.Submission) error

@@ -8,8 +8,9 @@ import (
 
 type UserHandlerOption func(u *UserHandler)
 type SubmissionHandlerOption func(s *SubmissionHandler)
-type UploadFileHandlerOption func(s *UploadFileHandler)
+type UploadFileHandlerOption func(uf *UploadFileHandler)
 type AuthHandlerOption func(s *AuthHandler)
+type ContestHanderOption func(c *ContestHander)
 
 func WithUserService(service services.UserService) UserHandlerOption {
 	return func(u *UserHandler) {
@@ -38,5 +39,11 @@ func WithAuthService(service services.AuthService) AuthHandlerOption {
 func WithSessionStore(sessioStore sessions.Store) AuthHandlerOption {
 	return func(a *AuthHandler) {
 		a.sessionStore = sessioStore
+	}
+}
+
+func WithContestService(service services.ContestService) ContestHanderOption {
+	return func(c *ContestHander) {
+		c.service = service
 	}
 }

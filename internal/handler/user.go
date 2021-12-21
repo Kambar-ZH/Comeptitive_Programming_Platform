@@ -83,5 +83,5 @@ func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusNotFound, err)
 		return
 	}
-	Respond(w, r, http.StatusOK, "")
+	Respond(w, r, http.StatusOK, nil)
 }

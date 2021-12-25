@@ -18,6 +18,7 @@ type (
 	UploadFileRequest struct {
 		File      multipart.File
 		ProblemId int
+		ContestId int
 	}
 	UploadFileResponse struct {
 		Submission *datastruct.Submission

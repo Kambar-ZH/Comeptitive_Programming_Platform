@@ -1,22 +1,28 @@
-package frontend
+package main
 
-// func printFileInfo(handler *multipart.FileHeader) {
-// 	log.Printf("Uploaded File: %+v\n", handler.Filename)
-// 	log.Printf("File Size: %+v\n", handler.Size)
-// 	log.Printf("MIME Header: %+v\n", handler.Header)
-// }
+import (
+	"html/template"
+	"net/http"
+	"site/test/inmemory"
+	"site/internal/handler"
+)
 
-// func (s *Server) HomePage() http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		tmpl, err := template.ParseFiles(inmemory.GetInstance().GetIndexHtml())
-// 		if err != nil {
-// 			ioutils.Error(w, r, http.StatusBadGateway, err)
-// 			return
-// 		}
-// 		data := struct{}{}
-// 		tmpl.Execute(w, data)
-// 	}
-// }
+func HomePage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles(inmemory.IndexHtml())
+		if err != nil {
+			handler.Error(w, r, http.StatusBadGateway, err)
+			return
+		}
+		data := struct{}{}
+		tmpl.Execute(w, data)
+	}
+}
+
+func main() {
+	http.HandleFunc("/", HomePage())
+	http.ListenAndServe(":8081", nil)
+}
 
 // func (s *Server) RegisterPage() http.HandlerFunc {
 // 	return func(w http.ResponseWriter, r *http.Request) {

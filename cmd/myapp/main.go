@@ -36,7 +36,7 @@ func main() {
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
 
 	brokers := []string{"localhost:29092"}
-	broker := kafka.NewBroker(brokers, cache, "peer2")
+	broker := kafka.NewBroker(brokers, cache, "peer1")
 	if err := broker.Connect(ctx); err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func main() {
 
 	srv := http.NewServer(
 		ctx,
-		http.WithAddress(":8081"),
+		http.WithAddress(":8080"),
 		http.WithStore(store),
 		http.WithSessionStore(sessionStore),
 		http.WithCache(cache),

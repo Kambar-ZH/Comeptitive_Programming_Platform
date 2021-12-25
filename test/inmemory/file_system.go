@@ -24,6 +24,10 @@ func TempSolutions() string {
 	relativePath := "temp_solutions"
 	return AbsolutePath(relativePath)
 }
+func MakeMe() string {
+	relativePath := "makeme"
+	return AbsolutePath(relativePath)
+}
 func ParticipantSolution() string {
 	relativePath := "cmd/myapp/participant_solution/participant_solution.go"
 	return AbsolutePath(relativePath)

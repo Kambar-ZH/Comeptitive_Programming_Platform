@@ -19,55 +19,27 @@ type UploadFileService interface {
 
 type UploadFileServiceImpl struct {
 	store store.Store
-
-	tasks   chan *Task
-	workers []*Worker
-}
-
-func (u UploadFileServiceImpl) RunPool() {
-	for _, worker := range u.workers {
-		go u.RunWorker(worker)
-	}
 }
 
 func NewUploadFileService(opts ...UploadFileServiceOption) UploadFileService {
-	svc := &UploadFileServiceImpl{
-		tasks: make(chan *Task, 100),
-		workers: []*Worker{ // can add more workers
-			{
-				command:                "run1",
-				cleanFile:              inmemory.AbsolutePath("cmd/myapp/main_solution/clean.txt"),
-				mainSolution:           inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.go"),
-				mainSolutionExe:        inmemory.AbsolutePath("cmd/myapp/main_solution/main_solution.exe"),
-				participantSolution:    inmemory.AbsolutePath("cmd/myapp/participant_solution/participant_solution.go"),
-				participantSolutionExe: inmemory.AbsolutePath("cmd/myapp/participant_solution/participant_solution.exe"),
-			},
-		},
-	}
+	svc := &UploadFileServiceImpl{}
 	for _, v := range opts {
 		v(svc)
 	}
-	svc.RunPool()
 	return svc
 }
 
 func (u UploadFileServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
-	// TODO: ASSIGN USER TO SUBMISSION
-	_, err := u.store.Submissions().ById(ctx, int(submission.Id))
-	if err != nil {
-		return err
-	}
 	user, ok := middleware.UserFromCtx(ctx)
 	if !ok {
-		log.Println("VERRRYYY BADAAAAA")
 		return middleware.ErrNotAuthenticated
 	}
 	submission.AuthorHandle = user.Handle
 	return u.store.Submissions().Create(ctx, submission)
 }
 
-func (u UploadFileServiceImpl) SaveInmemory(file multipart.File) (string, error) {
-	tempFile, err := ioutil.TempFile(inmemory.TempSolutions(), "upload-*")
+func (u UploadFileServiceImpl) SaveInmemory(dir string, file multipart.File) (string, error) {
+	tempFile, err := ioutil.TempFile(dir, "upload-*")
 	if err != nil {
 		return "", err
 	}
@@ -81,54 +53,46 @@ func (u UploadFileServiceImpl) SaveInmemory(file multipart.File) (string, error)
 	return filePath, nil
 }
 
-func (u UploadFileServiceImpl) RunWorker(worker *Worker) {
-	for task := range u.tasks {
-		filePath, err := u.SaveInmemory(task.req.File)
-		if err != nil {
-			task.out <- &dto.UploadFileResponse{Submission: nil, Error: err}
-			return
-		}
-		log.Println(filePath)
-
-		res, err := u.RunTestCases(task.ctx, worker, &dto.RunTestCasesRequest{
-			FilePath:  filePath,
-			ProblemId: task.req.ProblemId,
-		})
-		if err != nil {
-			task.out <- &dto.UploadFileResponse{Submission: nil, Error: err}
-			return
-		}
-		submission := &datastruct.Submission{
-			Verdict:    string(res.Verdict),
-			FailedTest: res.FailedTest,
-		}
-		u.Create(task.ctx, submission)
-		task.out <- &dto.UploadFileResponse{Submission: submission, Error: nil}
-	}
-}
-
 func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
-	out := make(chan *dto.UploadFileResponse)
-	u.tasks <- &Task{
-		req: req,
-		ctx: ctx,
-		out: out,
+	filePath, err := u.SaveInmemory(inmemory.TempSolutions(), req.File)
+	if err != nil {
+		return nil, err
 	}
-	result := <-out
-	return result.Submission, result.Error
+	res, err := u.RunTestCases(ctx, &dto.RunTestCasesRequest{
+		FilePath:  filePath,
+		ProblemId: req.ProblemId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	submission := &datastruct.Submission{
+		Verdict:    string(res.Verdict),
+		FailedTest: res.FailedTest,
+		ContestId:  int32(req.ContestId),
+		ProblemId: int32(req.ProblemId),
+	}
+	if err = u.Create(ctx, submission); err != nil {
+		log.Println(err)
+	}
+	return submission, nil
 }
 
-func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, worker *Worker, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
+func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
 	validator, err := u.store.Validators().ByProblemId(ctx, req.ProblemId)
 	if err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
 	}
 
+	worker, err := NewWorker()
+	if err != nil {
+		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
+	}
+	defer worker.CleanUp()
+
 	if err := worker.PrepareExe(validator.SolutionFilePath, req.FilePath); err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
 	}
 
-	defer worker.CleanUp()
 	for _, testCase := range validator.TestCases {
 		verdict, err := worker.RunTestCase(testCase)
 		if err != nil {

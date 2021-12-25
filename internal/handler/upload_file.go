@@ -5,6 +5,8 @@ import (
 	"site/internal/dto"
 	"site/internal/services"
 	"strconv"
+
+	"github.com/go-chi/chi"
 )
 
 type UploadFileHandler struct {
@@ -43,8 +45,14 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			Error(w, r, http.StatusInternalServerError, err)
 			return
 		}
+		contestId, err := strconv.Atoi(chi.URLParam(r, "contestId"))
+		if err != nil {
+			Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
 		submission, err := uf.service.UploadFile(r.Context(), &dto.UploadFileRequest{
 			ProblemId: problemId,
+			ContestId: contestId,
 			File:      file,
 		})
 		if err != nil {

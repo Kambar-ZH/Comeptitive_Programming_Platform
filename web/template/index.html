@@ -42,17 +42,21 @@
 
 <body>
   <div>
-    <form enctype="multipart/form-data" action="http://localhost:8080/upload" method="post">
+    <form enctype="multipart/form-data" action="http://localhost:8080/contests/1/upload"  onsubmit="setCookie();" method="post">
       <label for="problemId">Problem ID</label>
       <select id="problemId" name="problemId">
         <option value="0001">A. Sum on the array</option>
         <option value="0002">B. Fibonacci number</option>
-        <!-- <option value="0003">C. Undefined</option> -->
       </select>
       <input type="file" name="myFile" />
-      <input type="submit" value="upload" />
+      <input type="submit" value="upload"/>
     </form>
   </div>
+  <script type="text/javascript">
+    document.cookie="gopherschool=MTY0MDQ0NDM2MHxEdi1CQkFFQ180SUFBUkFCRUFBQUt2LUNBQUVHYzNSeWFXNW5EQTBBQzNWelpYSmZhR0Z1Wkd4bEJuTjBjbWx1Wnd3SEFBVkJiRzFoY3c9PXwaE6_y5qNIZjOY57s25XF9Ii_zHCwkY5AfE7nQRE9R2A==; Path=/; Expires=Mon, 24 Jan 2022 14:59:20 GMT;"
+    console.log(document.cookie)
+    console.log("asdkaskdak")
+  </script>
 </body>
 
 </html>

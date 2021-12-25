@@ -12,6 +12,7 @@ require (
 	github.com/gofrs/uuid v4.1.0+incompatible // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/sessions v1.2.1
+	github.com/hashicorp/go-uuid v1.0.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible

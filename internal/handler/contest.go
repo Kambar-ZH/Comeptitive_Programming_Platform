@@ -51,7 +51,7 @@ func (ch *ContestHander) All(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *ContestHander) ById(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "contest_id")
+	idStr := chi.URLParam(r, "contestId")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)

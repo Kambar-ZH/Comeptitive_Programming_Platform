@@ -39,7 +39,7 @@ func (s *Server) basicHandler() chi.Router {
 		r.Route("/{contestId}", func(r chi.Router) {
 			r.Get("/", ch.ById)
 			s.PrepareSubmissionRoutes(r, sh)
-			s.PrepareUploadFileRoutes(r, ufh)
+			r.HandleFunc("/upload", ufh.UploadFile())
 		})
 	})
 	return r
@@ -73,8 +73,4 @@ func (s *Server) PrepareContestRoutes(r chi.Router, h *handler.ContestHander) {
 		r.Put("/", h.Update)
 		r.Delete("/{id}", h.Delete)
 	})
-}
-
-func (s *Server) PrepareUploadFileRoutes(r chi.Router, h *handler.UploadFileHandler) {
-	r.HandleFunc("/upload", h.UploadFile())
 }

@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"site/internal/datastruct"
+	"site/test/inmemory"
 	"time"
 )
-
 
 // Copy to file with path f1Path the content of file located in f2Path
 func CopyFile(f1Path, f2Path string) error {
@@ -33,9 +33,19 @@ func CopyFile(f1Path, f2Path string) error {
 	return nil
 }
 
-// Run makefile with given command, build executable
-func BuildExe(command string) error {
-	cmd := exec.Command("make", command)
+func CleanUp(path string) error {
+	err := os.Remove(path)
+	if err != nil {
+		log.Printf("couldn't remove %s", path)
+	}
+	return nil
+}
+
+func BuildExe(execFile, progFile string) error {
+	execArg := fmt.Sprintf("exec='%s'", execFile)
+	progArg := fmt.Sprintf("prog='%s'", progFile)
+	cmd := exec.Command("make", "run", progArg, execArg)
+	cmd.Dir = inmemory.MakeMe()
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -111,6 +121,6 @@ func MustExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 	case err := <-errorCh:
 		return "", err
 	case <-time.After(3 * time.Second):
-		return "", fmt.Errorf("solution timeout")
+		return "", fmt.Errorf("execution timeout")
 	}
 }

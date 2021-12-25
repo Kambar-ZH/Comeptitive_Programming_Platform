@@ -30,10 +30,11 @@ Again on new terminal, from the root of the project:
 cd cmd\myapp
 go run main.go
 ```
-[Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)
-
-Make executable file:
+To run makefile:
 ```bash
 cd makeme
-make run program_name.go exe='exec_name.exe'
+make run prog=path_to_prog exec=exec_name.exe
 ```
+[Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)
+
+

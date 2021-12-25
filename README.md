@@ -31,3 +31,9 @@ cd cmd\myapp
 go run main.go
 ```
 [Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)
+
+Make executable file:
+```bash
+cd makeme
+make run program_name.go exe='exec_name.exe'
+```

@@ -69,7 +69,7 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 		Verdict:    string(res.Verdict),
 		FailedTest: res.FailedTest,
 		ContestId:  int32(req.ContestId),
-		ProblemId: int32(req.ProblemId),
+		ProblemId:  int32(req.ProblemId),
 	}
 	if err = u.Create(ctx, submission); err != nil {
 		log.Println(err)
@@ -87,9 +87,12 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTes
 	if err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
 	}
-	defer worker.CleanUp()
+	defer worker.RemoveAll()
 
-	if err := worker.PrepareExe(validator.SolutionFilePath, req.FilePath); err != nil {
+	if err := worker.PrepareMainExe(validator.SolutionFilePath); err != nil {
+		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
+	}
+	if err := worker.PrepareUserExe(req.FilePath); err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
 	}
 

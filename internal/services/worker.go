@@ -13,11 +13,11 @@ import (
 )
 
 type Worker struct {
-	userDirectory    string
 	mainDirectory    string
 	mainSolutionFile string
-	userSolutionFile string
 	mainSolutionExec string
+	userDirectory    string
+	userSolutionFile string
 	userSolutionExec string
 }
 
@@ -27,49 +27,55 @@ func NewWorker() (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	worker.userDirectory = fmt.Sprintf("%s/user-%s", inmemory.MakeMe(), uniqueId)
-	err = os.Mkdir(worker.userDirectory, 0700)
-	if err != nil {
-		return nil, err
-	}
 	worker.userSolutionFile = fmt.Sprintf("%s/sol.go", worker.userDirectory)
 	worker.userSolutionExec = fmt.Sprintf("%s/sol.exe", worker.userDirectory)
 
 	worker.mainDirectory = fmt.Sprintf("%s/main-%s", inmemory.MakeMe(), uniqueId)
-	err = os.Mkdir(worker.mainDirectory, 0700)
-	if err != nil {
-		return nil, err
-	}
 	worker.mainSolutionFile = fmt.Sprintf("%s/sol.go", worker.mainDirectory)
 	worker.mainSolutionExec = fmt.Sprintf("%s/sol.exe", worker.mainDirectory)
+		
+	if err = worker.CreateDirs(); err != nil {
+		return nil, err
+	}
 	return worker, nil
 }
 
-func (worker *Worker) PrepareExe(solutionFile, tempFile string) error {
-	if err := tools.CopyFile(worker.mainSolutionFile, solutionFile); err != nil {
+func (worker *Worker) CreateDirs() error {
+	if err := os.Mkdir(worker.userDirectory, 0700); err != nil {
 		return err
 	}
-	if err := tools.CopyFile(worker.userSolutionFile, tempFile); err != nil {
-		return err
-	}
-	if err := tools.BuildExe(worker.mainSolutionExec, worker.mainSolutionFile); err != nil {
-		log.Println("error on building main exe")
-		return err
-	}
-	if err := tools.BuildExe(worker.userSolutionExec, worker.userSolutionFile); err != nil {
-		log.Println("error on building user exe")
+	if err := os.Mkdir(worker.mainDirectory, 0700); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (worker *Worker) CleanUp() error {
-	err := os.RemoveAll(worker.mainDirectory)
-	if err != nil {
+func (worker *Worker) PrepareExe(solFile, tempFile, solExec string) error {
+	if err := tools.CopyFile(solFile, tempFile); err != nil {
+		return err
+	}
+	if err := tools.BuildExe(solExec, solFile); err != nil {
+		log.Printf("error on building %s", solExec)
+		return err
+	}
+	return nil
+}
+
+func (worker *Worker) PrepareMainExe(solFile string) error {
+	return worker.PrepareExe(worker.mainSolutionFile, solFile, worker.mainSolutionExec)
+}
+
+func (worker *Worker) PrepareUserExe(tempFile string) error {
+	return worker.PrepareExe(worker.userSolutionFile, tempFile, worker.userSolutionExec)
+}
+
+func (worker *Worker) RemoveAll() error {
+	if err := os.RemoveAll(worker.mainDirectory); err != nil {
 		log.Println(err)
 	}
-	err = os.RemoveAll(worker.userDirectory)
-	if err != nil {
+	if err := os.RemoveAll(worker.userDirectory); err != nil {
 		log.Println(err)
 	}
 	return nil
@@ -87,11 +93,18 @@ func (worker *Worker) RunTestCase(testCase datastruct.TestCase) (dto.Verdict, er
 		return dto.COMPILATION_ERROR, err
 	}
 
-	if expected != actual {
+	if !worker.Check(expected, actual) {
 		log.Printf("incorrect result on test [%d]:\nExpected: %s\nActual: %s\n", testCase.Id, expected, actual)
 		return dto.FAILED, err
 	}
 
 	log.Printf("correct result on test [%d]:\nExpected: %s\nActual: %s\n", testCase.Id, expected, actual)
 	return dto.PASSED, err
+}
+
+func (worker *Worker) Check(expected, actual string) bool {
+	// TODO: make smart validation using checker
+	// If checker not found run for equlity
+
+	return expected == actual
 }

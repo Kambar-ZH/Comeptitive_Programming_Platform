@@ -1,2 +1,3 @@
 .exe
-/temp_solutions
+temp_solutions/*
+!temp_solutions/.gitkeep

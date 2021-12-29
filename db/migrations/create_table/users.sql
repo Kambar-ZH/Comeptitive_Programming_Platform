@@ -1,5 +1,6 @@
 CREATE TABLE users (
-    handle VARCHAR(255) NOT NULL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    handle VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     country VARCHAR(255) DEFAULT '',
     city VARCHAR(255) DEFAULT '',

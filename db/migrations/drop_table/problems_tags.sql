@@ -1,0 +1,1 @@
+DROP TABLE problems_tags;

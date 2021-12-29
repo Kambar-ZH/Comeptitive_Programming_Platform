@@ -22,18 +22,11 @@ func NewUploadFileHandler(opts ...UploadFileHandlerOption) *UploadFileHandler {
 }
 
 func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
-	type UploadViewData struct {
-		FileName    string
-		ProblemName int
-		Verdict     string
-		FailedTest  int
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		r.ParseMultipartForm(10 << 20)
 
-		file, handler, err := r.FormFile("myFile")
+		file, _, err := r.FormFile("myFile")
 		if err != nil {
 			Error(w, r, http.StatusInternalServerError, err)
 			return
@@ -60,13 +53,6 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			return
 		}
 
-		data := UploadViewData{
-			FileName:    handler.Filename,
-			ProblemName: problemId,
-			Verdict:     string(submission.Verdict),
-			FailedTest:  int(submission.FailedTest),
-		}
-
-		Respond(w, r, http.StatusAccepted, data)
+		Respond(w, r, http.StatusAccepted, submission)
 	}
 }

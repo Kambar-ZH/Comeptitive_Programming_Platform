@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"site/internal/datastruct"
 	"site/internal/store"
 
@@ -26,11 +25,9 @@ func NewSubmissionRepository(conn *sqlx.DB) store.SubmissionRepository {
 
 func (s SubmissionRepository) All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
 	submissions := make([]*datastruct.Submission, 0)
-	basicQuery := "SELECT * FROM submissions"
-	if req.Filter != "" {
-		basicQuery = fmt.Sprintf("%s WHERE author_handle ILIKE $1 and contest_id = $2 OFFSET $3 LIMIT $4", basicQuery)
-
-		if err := s.conn.Select(&submissions, basicQuery, req.ContestId, "%"+req.Filter+"%", req.Offset, req.Limit); err != nil {
+	if req.FilterUserHandle != "" {
+		if err := s.conn.Select(&submissions, "SELECT submissions.* FROM users, submissions WHERE users.handle ILIKE $1 AND users.id = submissions.user_id AND contest_id = $2 OFFSET $3 LIMIT $4",
+			"%"+req.FilterUserHandle+"%", req.ContestId, req.Offset, req.Limit); err != nil {
 			return nil, err
 		}
 		return submissions, nil
@@ -51,8 +48,8 @@ func (s SubmissionRepository) ById(ctx context.Context, id int) (*datastruct.Sub
 
 func (s SubmissionRepository) Create(ctx context.Context, submission *datastruct.Submission) error {
 	// TODO: Date conversion
-	_, err := s.conn.Exec("INSERT INTO submissions(contest_id, problem_id, author_handle, verdict, failed_test) VALUES ($1, $2, $3, $4, $5)",
-		submission.ContestId, submission.ProblemId, submission.AuthorHandle, submission.Verdict, submission.FailedTest)
+	_, err := s.conn.Exec("INSERT INTO submissions(contest_id, problem_id, user_id, verdict, failed_test) VALUES ($1, $2, $3, $4, $5)",
+		submission.ContestId, submission.ProblemId, submission.UserId, submission.Verdict, submission.FailedTest)
 	if err != nil {
 		return err
 	}
@@ -61,8 +58,8 @@ func (s SubmissionRepository) Create(ctx context.Context, submission *datastruct
 
 func (s SubmissionRepository) Update(ctx context.Context, submission *datastruct.Submission) error {
 	// TODO: Date conversion
-	_, err := s.conn.Exec("UPDATE submissions SET(contest_id, problem_id, author_handle, verdict, failed_test) VALUES ($1, $2, $3, $4, $5)",
-		submission.ContestId, submission.ProblemId, submission.AuthorHandle, submission.Verdict, submission.FailedTest)
+	_, err := s.conn.Exec("UPDATE submissions SET contest_id = $1, problem_id = $2, user_id = $3, verdict = $4, failed_test = $5 WHERE id = $6",
+		submission.ContestId, submission.ProblemId, submission.UserId, submission.Verdict, submission.FailedTest, submission.Id)
 	if err != nil {
 		return err
 	}

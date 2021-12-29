@@ -10,7 +10,9 @@ type UserHandlerOption func(u *UserHandler)
 type SubmissionHandlerOption func(s *SubmissionHandler)
 type UploadFileHandlerOption func(uf *UploadFileHandler)
 type AuthHandlerOption func(s *AuthHandler)
-type ContestHanderOption func(c *ContestHander)
+type ContestHandlerOption func(c *ContestHander)
+type ProblemHandlerOption func(p *ProblemHandler)
+
 
 func WithUserService(service services.UserService) UserHandlerOption {
 	return func(u *UserHandler) {
@@ -42,8 +44,14 @@ func WithSessionStore(sessioStore sessions.Store) AuthHandlerOption {
 	}
 }
 
-func WithContestService(service services.ContestService) ContestHanderOption {
+func WithContestService(service services.ContestService) ContestHandlerOption {
 	return func(c *ContestHander) {
 		c.service = service
+	}
+}
+
+func WithProblemService(service services.ProblemService) ProblemHandlerOption {
+	return func(p *ProblemHandler) {
+		p.service = service
 	}
 }

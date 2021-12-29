@@ -23,7 +23,7 @@ var (
 type SubmissionService interface {
 	All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
 	ById(ctx context.Context, req *datastruct.SubmissionByIdRequest) (*datastruct.Submission, error)
-	Create(ctx context.Context, submission *datastruct.Submission) error
+	Create(ctx context.Context, req *datastruct.SubmissionCreateRequest) error
 	Update(ctx context.Context, req *datastruct.SubmissionUpdateRequest) error
 	Delete(ctx context.Context, req *datastruct.SubmissionDeleteRequest) error
 }
@@ -43,8 +43,8 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 }
 
 func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
-	if req.Filter != "" {
-		if value, ok := s.cache.Get(req.Filter); ok {
+	if req.FilterUserHandle != "" {
+		if value, ok := s.cache.Get(req.FilterUserHandle); ok {
 			if submissions, ok := value.([]*datastruct.Submission); ok {
 				log.Println("The result of cache", submissions)
 				return submissions, nil
@@ -54,9 +54,9 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.Submissi
 	req.Limit = submissionsPerPage
 	req.Offset = (req.Page - 1) * submissionsPerPage
 	submissions, err := s.store.Submissions().All(ctx, req)
-	if req.Filter != "" {
+	if req.FilterUserHandle != "" {
 		log.Println("Successfully cached!")
-		s.cache.Add(req.Filter, submissions)
+		s.cache.Add(req.FilterUserHandle, submissions)
 	}
 	return submissions, err
 }
@@ -83,16 +83,16 @@ func (s SubmissionServiceImpl) ById(ctx context.Context, req *datastruct.Submiss
 	return submission, err
 }
 
-func (s SubmissionServiceImpl) Create(ctx context.Context, submission *datastruct.Submission) error {
-	// TODO: ASSIGN USER TO SUBMISSION
+func (s SubmissionServiceImpl) Create(ctx context.Context, req *datastruct.SubmissionCreateRequest) error {
 	user, ok := middleware.UserFromCtx(ctx)
 	if !ok {
 		return middleware.ErrNotAuthenticated
 	}
-	submission.AuthorHandle = user.Handle
+	req.Submission.UserId = user.Id
+	req.Submission.ContestId = req.ContestId
 	log.Println("Cache was purged")
 	s.broker.Cache().Purge()
-	return s.store.Submissions().Create(ctx, submission)
+	return s.store.Submissions().Create(ctx, req.Submission)
 }
 
 func (s SubmissionServiceImpl) Update(ctx context.Context, req *datastruct.SubmissionUpdateRequest) error {

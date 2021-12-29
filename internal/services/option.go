@@ -12,6 +12,8 @@ type SubmissionServiceOption func(s *SubmissionServiceImpl)
 type UploadFileServiceOption func(s *UploadFileServiceImpl)
 type AuthServiceOption func(s *AuthServiceImpl)
 type ContestServiceOption func(s *ContestServiceImpl)
+type ProblemServiceOption func(s *ProblemServiceImpl)
+
 
 func UserServiceWithStore(store store.Store) UserServiceOption {
 	return func(u *UserServiceImpl) {
@@ -52,5 +54,11 @@ func AuthServiceWithStore(store store.Store) AuthServiceOption {
 func ContestServiceWithStore(store store.Store) ContestServiceOption {
 	return func(c *ContestServiceImpl) {
 		c.store = store
+	}
+}
+
+func ProblemServiceWithStore(store store.Store) ProblemServiceOption {
+	return func(p *ProblemServiceImpl) {
+		p.store = store
 	}
 }

@@ -12,7 +12,7 @@ const (
 )
 
 type UserService interface {
-	All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error)
+	All(ctx context.Context, query *datastruct.UserAllRequest) ([]*datastruct.User, error)
 	ByEmail(ctx context.Context, email string) (*datastruct.User, error)
 	ByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
@@ -32,10 +32,10 @@ func NewUserService(opts ...UserServiceOption) UserService {
 	return svc
 }
 
-func (u UserServiceImpl) All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error) {
-	query.Limit = usersPerPage
-	query.Offset = (query.Page - 1) * usersPerPage
-	users, err := u.store.Users().All(ctx, query)
+func (u UserServiceImpl) All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error) {
+	req.Limit = usersPerPage
+	req.Offset = (req.Page - 1) * usersPerPage
+	users, err := u.store.Users().All(ctx, req)
 	return users, err
 }
 

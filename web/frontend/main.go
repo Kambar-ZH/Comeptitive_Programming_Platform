@@ -2,9 +2,10 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
-	"site/test/inmemory"
 	"site/internal/handler"
+	"site/test/inmemory"
 )
 
 func HomePage() http.HandlerFunc {
@@ -21,6 +22,7 @@ func HomePage() http.HandlerFunc {
 
 func main() {
 	http.HandleFunc("/", HomePage())
+	log.Println("serving on :8081")
 	http.ListenAndServe(":8081", nil)
 }
 

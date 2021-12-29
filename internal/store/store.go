@@ -14,10 +14,11 @@ type Store interface {
 	Validators() ValidatorRepository
 	TestCases() TestCaseRepository
 	Contests() ContestRepository
+	Problems() ProblemRepository
 }
 
 type UserRepository interface {
-	All(ctx context.Context, query *datastruct.UserQuery) ([]*datastruct.User, error)
+	All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error)
 	ByEmail(ctx context.Context, email string) (*datastruct.User, error)
 	ByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
@@ -26,7 +27,7 @@ type UserRepository interface {
 }
 
 type SubmissionRepository interface {
-	All(ctx context.Context, query *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
+	All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
 	ById(ctx context.Context, id int) (*datastruct.Submission, error)
 	Create(ctx context.Context, submission *datastruct.Submission) error
 	Update(ctx context.Context, submission *datastruct.Submission) error
@@ -42,9 +43,18 @@ type TestCaseRepository interface {
 }
 
 type ContestRepository interface {
-	All(ctx context.Context, query *datastruct.ContestQuery) ([]*datastruct.Contest, error)
+	All(ctx context.Context, req *datastruct.ContestAllRequest) ([]*datastruct.Contest, error)
 	ById(ctx context.Context, id int) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error
+	Delete(ctx context.Context, id int) error
+}
+
+type ProblemRepository interface {
+	Problemset(ctx context.Context, req *datastruct.ProblemsetRequest) ([]*datastruct.Problem, error)
+	All(ctx context.Context, req *datastruct.ProblemAllRequest) ([]*datastruct.Problem, error)
+	ById(ctx context.Context, id int) (*datastruct.Problem, error)
+	Create(ctx context.Context, problem *datastruct.Problem) error
+	Update(ctx context.Context, problem *datastruct.Problem) error
 	Delete(ctx context.Context, id int) error
 }

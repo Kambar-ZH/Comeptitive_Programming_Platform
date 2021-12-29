@@ -30,11 +30,14 @@ Again on new terminal, from the root of the project:
 cd cmd\myapp
 go run main.go
 ```
+To run frontend side:
+```bash
+cd web\frontend
+go run main.go
+```
 To run makefile:
 ```bash
 cd makeme
 make run prog=path_to_prog exec=exec_name.exe
 ```
 [Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)
-
-

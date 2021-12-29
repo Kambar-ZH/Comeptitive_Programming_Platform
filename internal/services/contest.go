@@ -11,7 +11,7 @@ const (
 )
 
 type ContestService interface {
-	All(ctx context.Context, query *datastruct.ContestQuery) ([]*datastruct.Contest, error)
+	All(ctx context.Context, query *datastruct.ContestAllRequest) ([]*datastruct.Contest, error)
 	ById(ctx context.Context, id int) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error
@@ -30,10 +30,10 @@ func NewContestService(opts ...ContestServiceOption) ContestService {
 	return svc
 }
 
-func (c ContestServiceImpl) All(ctx context.Context, query *datastruct.ContestQuery) ([]*datastruct.Contest, error) {
-	query.Limit = contestPerPage
-	query.Offset = (query.Page - 1) * contestPerPage
-	return c.store.Contests().All(ctx, query)
+func (c ContestServiceImpl) All(ctx context.Context, req *datastruct.ContestAllRequest) ([]*datastruct.Contest, error) {
+	req.Limit = contestPerPage
+	req.Offset = (req.Page - 1) * contestPerPage
+	return c.store.Contests().All(ctx, req)
 }
 
 func (c ContestServiceImpl) ById(ctx context.Context, id int) (*datastruct.Contest, error) {

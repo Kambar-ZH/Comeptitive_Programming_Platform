@@ -11,10 +11,10 @@ type (
 		Description string    `json:"description,omitempty" db:"description,omitempty"`
 	}
 
-	ContestQuery struct {
-		Filter string `json:"filter"`
-		Page   int32  `json:"page"`
-		Limit  int32  `json:"limit"`
-		Offset int32  `json:"offset"`
+	ContestAllRequest struct {
+		Filter string
+		Page   int32 
+		Limit  int32 
+		Offset int32 
 	}
 )

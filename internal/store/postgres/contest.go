@@ -23,7 +23,7 @@ func NewContestsRepository(conn *sqlx.DB) store.ContestRepository {
 	return &ContestRepository{conn: conn}
 }
 
-func (c ContestRepository) All(ctx context.Context, query *datastruct.ContestQuery) ([]*datastruct.Contest, error) {
+func (c ContestRepository) All(ctx context.Context, query *datastruct.ContestAllRequest) ([]*datastruct.Contest, error) {
 	contests := make([]*datastruct.Contest, 0)
 	if err := c.conn.Select(&contests, "SELECT * FROM contests OFFSET $1 LIMIT $2", query.Offset, query.Limit); err != nil {
 		return nil, err

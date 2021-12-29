@@ -2,6 +2,7 @@ package datastruct
 
 type (
 	User struct {
+		Id                int32  `json:"id" db:"id"`
 		Handle            string `json:"handle" db:"handle"`
 		Email             string `json:"email" db:"email"`
 		Country           string `json:"country" db:"country"`
@@ -13,10 +14,10 @@ type (
 		EncryptedPassword string `json:"encrypted_password" db:"encrypted_password"`
 	}
 
-	UserQuery struct {
-		Filter string `json:"filter"`
-		Page   int32  `json:"page"`
-		Limit  int32  `json:"limit"`
-		Offset int32  `json:"offset"`
+	UserAllRequest struct {
+		Filter string
+		Page   int32
+		Limit  int32
+		Offset int32
 	}
 )

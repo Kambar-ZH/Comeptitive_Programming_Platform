@@ -16,6 +16,7 @@ type DB struct {
 	contests    store.ContestRepository
 	validators  store.ValidatorRepository
 	testCases   store.TestCaseRepository
+	problems    store.ProblemRepository
 }
 
 func NewDB() store.Store {

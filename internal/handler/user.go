@@ -37,12 +37,12 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) All(w http.ResponseWriter, r *http.Request) {
-	query := &datastruct.UserQuery{
+	req := &datastruct.UserAllRequest{
 		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
 		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
 
-	users, err := uh.service.All(r.Context(), query)
+	users, err := uh.service.All(r.Context(), req)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return

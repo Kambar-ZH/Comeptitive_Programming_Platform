@@ -30,8 +30,17 @@ func (sh *SubmissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusBadRequest, err)
 		return
 	}
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
+	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
 
-	err := sh.service.Create(r.Context(), submission)
+	err = sh.service.Create(r.Context(), &datastruct.SubmissionCreateRequest{
+		Submission: submission,
+		ContestId: int32(contestId),
+	})
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -48,7 +57,7 @@ func (sh *SubmissionHandler) All(w http.ResponseWriter, r *http.Request) {
 	}
 	req := &datastruct.SubmissionAllRequest{
 		Page: r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		FilterUserHandle: r.Context().Value(middleware.CtxKeyFilter).(string),
 		ContestId: int32(contestId),
 	}
 

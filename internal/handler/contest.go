@@ -15,7 +15,7 @@ type ContestHander struct {
 	service services.ContestService
 }
 
-func NewContestHandler(opts ...ContestHanderOption) *ContestHander {
+func NewContestHandler(opts ...ContestHandlerOption) *ContestHander {
 	ch := &ContestHander{}
 	for _, v := range opts {
 		v(ch)
@@ -37,12 +37,12 @@ func (ch *ContestHander) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ch *ContestHander) All(w http.ResponseWriter, r *http.Request) {
-	query := &datastruct.ContestQuery{
+	req := &datastruct.ContestAllRequest{
 		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
 		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
 
-	contests, err := ch.service.All(r.Context(), query)
+	contests, err := ch.service.All(r.Context(), req)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return

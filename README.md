@@ -30,7 +30,7 @@ docker-compose up
 # Migrations
 ### Copy content of **db/migrations/init.db.sql**
 
-### Open DataGrip, configure DSN as following (password amdinamdin):
+### Open DataGrip, configure DSN as following (password adminadmin):
 <p>
     <img src="images/dsn_config.png" width="100%" height="100%" />
 </p>

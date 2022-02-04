@@ -19,28 +19,41 @@
 # web
 5️⃣ The frontend part (templates and css). 
 
-To run project enter following commands from the root of the project:
+<br />
+
+### To run project enter following commands from the root of the project:
 ```bash
 cd deployments/kafka
 docker-compose up
 ```
 
-# API
+# Migrations
+### Copy content of **db/migrations/init.db.sql**
 
-    WITHOUT AUTHENTICATION:
+### Open DataGrip, configure DSN as following:
+***
+![]("https://github.com/Kambar-ZH/Comeptitive_Programming_Platform/images/DSN_config.png")
+***
+
+# API
+- WITHOUT AUTHENTICATION:
+
         localhost:8080/users
         localhost:8080/problemset
         localhost:8080/sessions?email=user_email&password=user_password
 
-    WITH AUTHENTICATION:
+- WITH AUTHENTICATION:
+
         localhost:8080/profile
         localhost:8080/contests
         localhost:8080/contests/1
         localhost:8080/contests/1/submissions
         localhost:8080/contests/1/problems
         localhost:8080/contests/1/problems/1
+***
+### Open html page in web browser **web/template/index.html**
 
-Open html page in web browser (web/template/index.html)
+<br />
 
 # Upload solution: 
     for problem A (client_side/solutions/0001/solution.go) 

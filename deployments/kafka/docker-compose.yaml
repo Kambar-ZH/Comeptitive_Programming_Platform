@@ -37,6 +37,7 @@ services:
       DSN: postgres://postgres:adminadmin@postgres:5432/codeforces
       KAFKA_CONN: kafka:9092
       PEER: peer1
+      PORT: :8080
     ports: 
       - 8080:8080
     depends_on:

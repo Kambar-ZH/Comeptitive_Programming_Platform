@@ -4,17 +4,15 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"site/internal/config"
 	"site/internal/http"
 	"site/internal/logger"
 	"site/internal/message_broker/kafka"
 	"site/internal/store/postgres"
-	"site/internal/config"
 	"syscall"
-	"time"
 
 	"github.com/gorilla/sessions"
 	lru "github.com/hashicorp/golang-lru"
-
 )
 
 func main() {
@@ -47,15 +45,15 @@ func main() {
 
 	brokers := []string{config.KAFKA_CONN()}
 	broker := kafka.NewBroker(brokers, cache, config.PEER())
-	for broker.Connect(ctx) != nil {
-		time.Sleep(1 * time.Second)
-		logger.Logger.Error("kafka cluster unreachable")
+	if err := broker.Connect(ctx); err != nil {
+		logger.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 	defer broker.Close()
 
 	srv := http.NewServer(
 		ctx,
-		http.WithAddress(":8080"),
+		http.WithAddress(config.PORT()),
 		http.WithStore(store),
 		http.WithSessionStore(sessionStore),
 		http.WithCache(cache),

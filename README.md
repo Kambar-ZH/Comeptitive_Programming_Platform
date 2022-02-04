@@ -19,24 +19,31 @@
 # web
 5️⃣ The frontend part (templates and css). 
 
-To run project on windows enter following commands from the root of the project:
+To run project enter following commands from the root of the project:
 ```bash
 cd deployments/kafka
-docker compose up
+docker-compose up
 ```
-Again on new terminal, from the root of the project:
-```bash
-cd cmd/myapp
-go run main.go
-```
-To run frontend side:
-```bash
-cd web/frontend
-go run main.go
-```
-To run makefile:
-```bash
-cd makeme
-make run prog=path_to_prog exec=exec_name.exe
-```
+
+Open html page in web browser (web -> template -> index.html).
+
+Upload solution: 
+    for problem A (client_side -> solutions -> 0001 -> solution.go)
+    for problem B (client_side -> solutions -> 0002 -> solution.go)
+
+API:
+    WITHOUT AUTHENTICATION:
+        localhost:8080/users
+        localhost:8080/problemset
+        localhost:8080/sessions?email=user_email&password=user_password     // Requires postman to send user cridentials
+    WITH AUTHENTICATION:                                                    // After cookie set in browser
+        localhost:8080/profile
+        localhost:8080/contests
+        localhost:8080/contests/1
+        localhost:8080/contests/1/submissions
+        localhost:8080/contests/1/problems
+        localhost:8080/contests/1/problems/1
+
+
+
 [Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)

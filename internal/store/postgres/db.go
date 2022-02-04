@@ -33,7 +33,7 @@ func (db *DB) Connect(url string) error {
 
 	start := time.Now()
 	for conn.Ping() != nil {
-		if start.After(start.Add(500 * time.Second)) {
+		if start.After(start.Add(5 * time.Second)) {
 			logger.Logger.Error("failed connect to db after 5 seconds")
 			break
 		}

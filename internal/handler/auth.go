@@ -26,6 +26,15 @@ func NewAuthHandler(opts ...AuthHandlerOption) *AuthHandler {
 
 func (a AuthHandler) CreateSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		/*
+			// URLPARAMS
+			req := &dto.Cridentials{
+				Email: chi.URLParam(r, "email"),
+				Password: chi.URLParam(r, "password"),
+			}
+		*/
+
+		// JSON
 		req := &dto.Cridentials{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			Error(w, r, http.StatusBadRequest, err)
@@ -76,7 +85,7 @@ func (a AuthHandler) AuthenticateUser(next http.Handler) http.Handler {
 	})
 }
 
-func (a AuthHandler) HandleWhoami() http.HandlerFunc {
+func (a AuthHandler) HandleProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, _ := middleware.UserFromCtx(r.Context())
 		Respond(w, r, http.StatusOK, user)

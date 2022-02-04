@@ -31,7 +31,7 @@ func (s *Server) basicHandler() chi.Router {
 
 	r.Route("/profile", func(r chi.Router) {
 		r.Use(ah.AuthenticateUser)
-		r.HandleFunc("/", ah.HandleWhoami())
+		r.HandleFunc("/", ah.HandleProfile())
 	})
 
 	r.Route("/problemset", func(r chi.Router) {

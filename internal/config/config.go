@@ -25,3 +25,11 @@ func PEER() string {
 	}
 	return peer
 }
+
+func PORT() string {
+	port := os.Getenv("PORT")
+	if (port == "") {
+		port = ":8080"
+	}
+	return port
+}

@@ -2,8 +2,11 @@ package kafka
 
 import (
 	"context"
-	lru "github.com/hashicorp/golang-lru"
+	"site/internal/logger"
 	message_broker "site/internal/message_broker"
+	"time"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 type Broker struct {
@@ -19,12 +22,27 @@ func NewBroker(brokers []string, cache *lru.TwoQueueCache, clientID string) mess
 }
 
 func (b *Broker) Connect(ctx context.Context) error {
-	brokers := []message_broker.SubBrokerWithClient{b.Cache()}
+	connect := func(ctx context.Context) error {
+		brokers := []message_broker.SubBrokerWithClient{b.Cache()}
 
-	for _, broker := range brokers {
-		if err := broker.Connect(ctx, b.brokers); err != nil {
-			return err
+		for _, broker := range brokers {
+			if err := broker.Connect(ctx, b.brokers); err != nil {
+				return err
+			}
 		}
+		return nil
+	}
+
+	start := time.Now()
+	for connect(ctx) != nil {
+		if start.After(start.Add(5 * time.Second)) {
+			logger.Logger.Error("failed connect to kafka after 5 seconds")
+			break
+		}
+	}
+
+	if err := connect(ctx); err != nil {
+		return err
 	}
 
 	return nil

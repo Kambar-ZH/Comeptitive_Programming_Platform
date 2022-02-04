@@ -32,7 +32,7 @@ docker-compose up
 
 ### Open DataGrip, configure DSN as following:
 ***
-![]("https://github.com/Kambar-ZH/Comeptitive_Programming_Platform/images/dsn_config.png")
+![]("https://github.com/Kambar-ZH/Comeptitive_Programming_Platform/images/dsn_config.png?raw=true")
 ***
 
 # API
@@ -53,7 +53,7 @@ docker-compose up
 ***
 ### Open html page in web browser **web/template/index.html**
 
-<br />
+***
 
 # Upload solution: 
     for problem A (client_side/solutions/0001/solution.go) 

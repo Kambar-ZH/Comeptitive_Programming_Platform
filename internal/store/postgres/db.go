@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"site/internal/logger"
 	"site/internal/store"
+	"time"
 
 	_ "github.com/jackc/pgx/stdlib"
 
@@ -27,6 +29,14 @@ func (db *DB) Connect(url string) error {
 	conn, err := sqlx.Connect("pgx", url)
 	if err != nil {
 		return err
+	}
+
+	start := time.Now()
+	for conn.Ping() != nil {
+		if start.After(start.Add(500 * time.Second)) {
+			logger.Logger.Error("failed connect to db after 5 seconds")
+			break
+		}
 	}
 
 	if err := conn.Ping(); err != nil {

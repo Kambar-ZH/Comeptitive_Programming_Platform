@@ -1,54 +1,50 @@
 package inmemory
 
+import (
+	"path/filepath"
+	"runtime"
+	"strings"
+)
+
+var (
+	absPath string
+)
+
 func RegisterHtml() string {
 	relativePath := "web/template/register.html"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
 func LoginHtml() string {
 	relativePath := "web/template/login.html"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
 func IndexHtml() string {
 	relativePath := "web/template/index.html"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
 func UploadHtml() string {
 	relativePath := "web/template/upload.html"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
 func RatingsHtml() string {
 	relativePath := "web/template/ratings.html"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
 func TempSolutions() string {
-	relativePath := "temp_solutions"
-	return AbsolutePath(relativePath)
+	relativePath := "../../temp_solutions"
+	return relativePath
 }
 func MakeMe() string {
 	relativePath := "makeme"
-	return AbsolutePath(relativePath)
+	return AbsPath(relativePath)
 }
-func ParticipantSolution() string {
-	relativePath := "cmd/myapp/participant_solution/participant_solution.go"
-	return AbsolutePath(relativePath)
-}
-func ParticipantSolutionExe() string {
-	relativePath := "cmd/myapp/participant_solution/participant_solution.exe"
-	return AbsolutePath(relativePath)
-}
-func MainSolution() string {
-	relativePath := "cmd/myapp/main_solution/main_solution.go"
-	return AbsolutePath(relativePath)
-}
-func MainSolutionExe() string {
-	relativePath := "cmd/myapp/main_solution/main_solution.exe"
-	return AbsolutePath(relativePath)
-}
-func CleanFile() string {
-	relativePath := "cmd/myapp/main_solution/clean.txt"
-	return AbsolutePath(relativePath)
-}
-
-func AbsolutePath(relativePath string) string {
-	return "C:/Users/User/Documents/Visual Studio/GoLang/test/" + relativePath
+func AbsPath(relativePath string) string {
+	if (absPath == "") {
+		_, b, _, _ := runtime.Caller(0)
+		basepath := filepath.Dir(b)
+		path := strings.Split(basepath, "/")
+		path = path[:len(path)-2]
+		absPath = strings.Join(path, "/") + "/"
+	}
+	return absPath + relativePath
 }

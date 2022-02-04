@@ -21,3 +21,25 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adminadmin
+      POSTGRES_DATABASE: codeforces
+    ports:
+      - 54320:5432
+      
+  app:
+    build: ../../
+    environment:
+      DSN: postgres://postgres:adminadmin@postgres:5432/codeforces
+      KAFKA_CONN: kafka:9092
+      PEER: peer1
+    ports: 
+      - 8080:8080
+    depends_on:
+      - postgres
+      - kafka
+      - zookeeper

@@ -1,3 +1,4 @@
 .exe
+.vscode
 temp_solutions/*
 !temp_solutions/.gitkeep

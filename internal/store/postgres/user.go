@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"site/internal/datastruct"
 	"site/internal/store"
 
@@ -26,16 +25,24 @@ func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
 
 func (u UserRepository) All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error) {
 	users := make([]*datastruct.User, 0)
-	basicQuery := "SELECT * FROM users"
 	if req.Filter != "" {
-		basicQuery = fmt.Sprintf("%s WHERE handle ILIKE $1 OFFSET $2 LIMIT $3", basicQuery)
-
-		if err := u.conn.Select(&users, basicQuery, "%"+req.Filter+"%", req.Offset, req.Limit); err != nil {
+		if err := u.conn.Select(&users,
+			`SELECT * 
+				FROM users 
+				WHERE handle ILIKE $1 
+				OFFSET $2 
+				LIMIT $3`,
+			"%"+req.Filter+"%", req.Offset, req.Limit); err != nil {
 			return nil, err
 		}
 		return users, nil
 	}
-	if err := u.conn.Select(&users, "SELECT * FROM users OFFSET $1 LIMIT $2", req.Offset, req.Limit); err != nil {
+	if err := u.conn.Select(&users,
+		`SELECT * 
+			FROM users 
+			OFFSET $1 
+			LIMIT $2`,
+		req.Offset, req.Limit); err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -43,7 +50,11 @@ func (u UserRepository) All(ctx context.Context, req *datastruct.UserAllRequest)
 
 func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
 	user := new(datastruct.User)
-	if err := u.conn.Get(user, "SELECT * FROM users WHERE email = $1", email); err != nil {
+	if err := u.conn.Get(user,
+		`SELECT * 
+			FROM users 
+			WHERE email = $1`,
+		email); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -51,14 +62,20 @@ func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.
 
 func (u UserRepository) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
 	user := new(datastruct.User)
-	if err := u.conn.Get(user, "SELECT * FROM users WHERE handle = $1", handle); err != nil {
+	if err := u.conn.Get(user,
+		`SELECT * 
+			FROM users 
+			WHERE handle = $1`,
+		handle); err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
 func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error {
-	_, err := u.conn.Exec("INSERT INTO users(handle, email, country, city, encrypted_password) VALUES ($1, $2, $3, $4, $5)",
+	_, err := u.conn.Exec(
+		`INSERT INTO users (handle, email, country, city, encrypted_password) 
+			VALUES ($1, $2, $3, $4, $5)`,
 		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {
 		return err
@@ -67,7 +84,10 @@ func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error
 }
 
 func (u UserRepository) Update(ctx context.Context, user *datastruct.User) error {
-	_, err := u.conn.Exec("UPDATE users SET(handle, email, country, city, encrypted_password) = ($1, $2, $3, $4, $5) WHERE handle = $1",
+	_, err := u.conn.Exec(
+		`UPDATE users 
+			SET(handle, email, country, city, encrypted_password) = ($1, $2, $3, $4, $5) 
+			WHERE handle = $1`,
 		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {
 		return err
@@ -76,7 +96,10 @@ func (u UserRepository) Update(ctx context.Context, user *datastruct.User) error
 }
 
 func (u UserRepository) Delete(ctx context.Context, handle string) error {
-	_, err := u.conn.Exec("DELETE FROM users WHERE handle = $1", handle)
+	_, err := u.conn.Exec(
+		`DELETE FROM users 
+			WHERE handle = $1`,
+		handle)
 	if err != nil {
 		return err
 	}

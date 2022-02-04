@@ -25,12 +25,20 @@ func NewValidatorRepository(conn *sqlx.DB) store.ValidatorRepository {
 
 func (v ValidatorRepository) ByProblemId(ctx context.Context, problemId int) (*datastruct.Validator, error) {
 	validator := new(datastruct.Validator)
-	err := v.conn.Get(validator, "SELECT * FROM validators WHERE problem_id = $1", problemId)
+	err := v.conn.Get(validator, 
+		`SELECT * 
+			FROM validators 
+			WHERE problem_id = $1`, 
+		problemId)
 	if err != nil {
 		return nil, err
 	}
 	testCases := make([]datastruct.TestCase, 0)
-	err = v.conn.Select(&testCases, "SELECT * FROM test_cases WHERE problem_id = $1", problemId)
+	err = v.conn.Select(&testCases, 
+		`SELECT * 
+			FROM test_cases 
+			WHERE problem_id = $1`, 
+		problemId)
 	if err != nil {
 		return nil, err
 	}

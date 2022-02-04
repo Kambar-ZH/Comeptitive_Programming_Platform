@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"site/internal/datastruct"
 	"site/internal/dto"
@@ -72,7 +71,7 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 		ProblemId:  int32(req.ProblemId),
 	}
 	if err = u.Create(ctx, submission); err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	return submission, nil
 }

@@ -2,12 +2,12 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
+	"site/internal/logger"
 )
 
 func Error(w http.ResponseWriter, r *http.Request, code int, err error) {
-	log.Println(err)
+	logger.Logger.Error(err.Error())
 	Respond(w, r, code, map[string]string{"error": err.Error()})
 }
 

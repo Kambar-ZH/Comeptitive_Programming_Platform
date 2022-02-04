@@ -2,43 +2,54 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"site/internal/http"
+	"site/internal/logger"
 	"site/internal/message_broker/kafka"
 	"site/internal/store/postgres"
+	"site/internal/config"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/sessions"
 	lru "github.com/hashicorp/golang-lru"
-)
 
-const (
-	urlAddress = "postgres://postgres:adminadmin@localhost:5432/codeforces"
 )
 
 func main() {
 	store := postgres.NewDB()
-	if err := store.Connect(urlAddress); err != nil {
-		panic(err)
+	if err := store.Connect(config.DSN()); err != nil {
+		logger.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 	defer store.Close()
 
 	cache, err := lru.New2Q(6)
 	if err != nil {
-		panic(err)
+		logger.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go CatchTermination(cancel)
-	
+	сatchTerminationfunc := func(cancel context.CancelFunc) {
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+		<-stop
+
+		logger.Logger.Warn("caught termination signal")
+		cancel()
+	}
+
+	go сatchTerminationfunc(cancel)
+
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
 
-	brokers := []string{"localhost:29092"}
-	broker := kafka.NewBroker(brokers, cache, "peer1")
-	if err := broker.Connect(ctx); err != nil {
-		panic(err)
+	brokers := []string{config.KAFKA_CONN()}
+	broker := kafka.NewBroker(brokers, cache, config.PEER())
+	for broker.Connect(ctx) != nil {
+		time.Sleep(1 * time.Second)
+		logger.Logger.Error("kafka cluster unreachable")
 	}
 	defer broker.Close()
 
@@ -52,17 +63,8 @@ func main() {
 	)
 
 	if err := srv.Run(); err != nil {
-		log.Println(err)
+		logger.Logger.Error(err.Error())
 	}
 
 	srv.WaitForGracefulTermination()
-}
-
-func CatchTermination(cancel context.CancelFunc) {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-
-	log.Print("[WARN] caught termination signal")
-	cancel()
 }

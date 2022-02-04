@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"site/internal/datastruct"
+	"site/internal/logger"
 	"site/test/inmemory"
 	"time"
 )
 
-// Copy to file with path f1Path the content of file located in f2Path
-func CopyFile(f1Path, f2Path string) error {
-	file, err := os.Create(f1Path)
+// Copy content from src to dst
+func CopyFile(src, dst string) error {
+	file, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func CopyFile(f1Path, f2Path string) error {
 		}
 	}()
 
-	data, err := os.ReadFile(f2Path)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
@@ -33,31 +33,22 @@ func CopyFile(f1Path, f2Path string) error {
 	return nil
 }
 
-func CleanUp(path string) error {
-	err := os.Remove(path)
-	if err != nil {
-		log.Printf("couldn't remove %s", path)
-	}
-	return nil
-}
-
 func BuildExe(execFile, progFile string) error {
-	execArg := fmt.Sprintf("exec='%s'", execFile)
-	progArg := fmt.Sprintf("prog='%s'", progFile)
+	execArg, progArg := fmt.Sprintf("exec='%s'", execFile), fmt.Sprintf("prog='%s'", progFile)
 	cmd := exec.Command("make", "run", progArg, execArg)
 	cmd.Dir = inmemory.MakeMe()
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var errOut bytes.Buffer
+	cmd.Stderr = &errOut
 	if err := cmd.Run(); err != nil {
-		log.Println("couldn't build exe")
+		logger.Logger.Error(errOut.String())
 		return err
 	}
 	return nil
 }
 
 // Run executable file
-func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
-	cmd := exec.Command(fPath)
+func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) {
+	cmd := exec.Command(filePath)
 
 	stdin, err := cmd.StdinPipe()
 	defer func() {
@@ -66,7 +57,7 @@ func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 		}
 	}()
 	if err != nil {
-		log.Println("error on stdinpipe")
+		logger.Logger.Error("error on stdinpipe")
 		return "", err
 	}
 
@@ -85,7 +76,7 @@ func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 		return "", err
 	}
 
-	input, err := os.ReadFile(tCase.TestFile)
+	input, err := os.ReadFile(testCase.TestFile)
 	if err != nil {
 		return "", err
 	}
@@ -103,11 +94,11 @@ func ExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
 }
 
 // Run executable file, if program doesn't halt, finish after 3 seconds
-func MustExecuteFile(fPath string, tCase datastruct.TestCase) (string, error) {
+func MustExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) {
 	ch, errorCh := make(chan string), make(chan error)
 
 	go func() {
-		verdict, err := ExecuteFile(fPath, tCase)
+		verdict, err := ExecuteFile(filePath, testCase)
 		if err == nil {
 			ch <- verdict
 			return

@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"log"
 	"net/http"
+	"site/internal/logger"
 	"strconv"
 )
 
@@ -16,7 +16,7 @@ func Paginate(next http.Handler) http.Handler {
 		)
 		if pageStr != "" {
 			if page, err = strconv.Atoi(pageStr); err != nil {
-				log.Println(err)
+				logger.Logger.Error(err.Error())
 			}
 		}
 

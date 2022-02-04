@@ -2,8 +2,8 @@ package http
 
 import (
 	"context"
-	"log"
 	"net/http"
+	"site/internal/logger"
 	messagebroker "site/internal/message_broker"
 	"site/internal/store"
 	"time"
@@ -45,7 +45,7 @@ func (s *Server) Run() error {
 
 	go s.ListenCtxForGT(srv)
 
-	log.Printf("serving on %v", srv.Addr)
+	logger.Logger.Sugar().Debugf("serving on %v", srv.Addr)
 	return srv.ListenAndServe()
 }
 
@@ -53,11 +53,11 @@ func (s *Server) ListenCtxForGT(srv *http.Server) {
 	<-s.ctx.Done() // blocked until context not canceled
 
 	if err := srv.Shutdown(context.Background()); err != nil {
-		log.Printf("got error while shutting down %v", err)
+		logger.Logger.Sugar().Errorf("got error while shutting down %v", err.Error())
 		return
 	}
 
-	log.Println("proccessed all idle connections")
+	logger.Logger.Debug("proccessed all idle connections")
 	close(s.idleConnsCh)
 }
 

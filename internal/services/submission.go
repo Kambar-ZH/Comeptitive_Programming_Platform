@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"errors"
-	"log"
 	"site/internal/datastruct"
+	"site/internal/logger"
 	messagebroker "site/internal/message_broker"
 	"site/internal/middleware"
 	"site/internal/store"
@@ -46,7 +46,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.Submissi
 	if req.FilterUserHandle != "" {
 		if value, ok := s.cache.Get(req.FilterUserHandle); ok {
 			if submissions, ok := value.([]*datastruct.Submission); ok {
-				log.Println("The result of cache", submissions)
+				logger.Logger.Sugar().Debugf("cache returned", submissions)
 				return submissions, nil
 			}
 		}
@@ -55,7 +55,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.Submissi
 	req.Offset = (req.Page - 1) * submissionsPerPage
 	submissions, err := s.store.Submissions().All(ctx, req)
 	if req.FilterUserHandle != "" {
-		log.Println("Successfully cached!")
+		logger.Logger.Sugar().Debugf("query cached", submissions)
 		s.cache.Add(req.FilterUserHandle, submissions)
 	}
 	return submissions, err
@@ -78,7 +78,7 @@ func (s SubmissionServiceImpl) ById(ctx context.Context, req *datastruct.Submiss
 	if submission.ContestId != req.ContestId {
 		return nil, errSubmissionNotFound
 	}
-	log.Println("Successfully cached!")
+	logger.Logger.Sugar().Debugf("query cached", submission)
 	s.cache.Add(req.SubmissionId, submission)
 	return submission, err
 }
@@ -90,7 +90,7 @@ func (s SubmissionServiceImpl) Create(ctx context.Context, req *datastruct.Submi
 	}
 	req.Submission.UserId = user.Id
 	req.Submission.ContestId = req.ContestId
-	log.Println("Cache was purged")
+	logger.Logger.Debug("cache was purged")
 	s.broker.Cache().Purge()
 	return s.store.Submissions().Create(ctx, req.Submission)
 }
@@ -103,7 +103,7 @@ func (s SubmissionServiceImpl) Update(ctx context.Context, req *datastruct.Submi
 	if req.ContestId != submission.ContestId {
 		return errSubmissionNotFound
 	}
-	log.Printf("Submission with [id=%d] was removed from cache\n", req.Submission.Id)
+	logger.Logger.Sugar().Debugf("submission with [id=%d] was removed from cache", req.Submission.Id)
 	s.broker.Cache().Remove(req.Submission.Id)
 	return s.store.Submissions().Update(ctx, req.Submission)
 }
@@ -117,6 +117,6 @@ func (s SubmissionServiceImpl) Delete(ctx context.Context, req *datastruct.Submi
 		return errSubmissionNotFound
 	}
 	s.broker.Cache().Remove(req.SubmissionId)
-	log.Printf("Submission with [id=%d] was removed from cache\n", req.SubmissionId)
+	logger.Logger.Sugar().Debugf("submission with [id=%d] was removed from cache", req.SubmissionId)
 	return s.store.Submissions().Delete(ctx, int(req.SubmissionId))
 }

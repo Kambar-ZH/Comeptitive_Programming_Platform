@@ -25,7 +25,11 @@ func NewTestCaseRepository(conn *sqlx.DB) store.TestCaseRepository {
 
 func (v TestCaseRepository) ByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error) {
 	testCases := make([]*datastruct.TestCase, 0)
-	err := v.conn.Select(&testCases, "SELECT * FROM test_cases WHERE problem_id = $1", problemId)
+	err := v.conn.Select(&testCases, 
+		`SELECT * 
+			FROM test_cases 
+			WHERE problem_id = $1`, 
+		problemId)
 	if err != nil {
 		return nil, err
 	}

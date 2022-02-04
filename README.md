@@ -21,18 +21,17 @@
 
 To run project on windows enter following commands from the root of the project:
 ```bash
-cd deployments\kafka
-"C:\Program Files\Docker\Docker\DockerCli.exe" -SwitchDaemon
+cd deployments/kafka
 docker compose up
 ```
 Again on new terminal, from the root of the project:
 ```bash
-cd cmd\myapp
+cd cmd/myapp
 go run main.go
 ```
 To run frontend side:
 ```bash
-cd web\frontend
+cd web/frontend
 go run main.go
 ```
 To run makefile:

@@ -3,8 +3,8 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"site/internal/datastruct"
+	"site/internal/logger"
 	messagebroker "site/internal/message_broker"
 
 	"github.com/Shopify/sarama"
@@ -66,7 +66,7 @@ func (c *CacheBroker) Connect(ctx context.Context, brokers []string) error {
 			// server-side rebalance happens, the consumer session will need to be
 			// recreated to get the new claims
 			if err := c.consumerGroup.Consume(ctx, []string{cacheTopic}, c.consumeHandler); err != nil {
-				log.Panicf("Error from consumer: %v", err)
+				logger.Logger.Sugar().Panicf("Error from consumer: %v", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop
 			if ctx.Err() != nil {
@@ -108,7 +108,7 @@ func (c *CacheBroker) Remove(key interface{}) error {
 		Topic: cacheTopic,
 		Value: sarama.StringEncoder(msgRaw),
 	})
-	
+
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (c *cacheConsumeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 	// The `ConsumeClaim` itself is called within a goroutine, see:
 	// https://github.com/Shopify/sarama/blob/main/consumer_group.go#L27-L29
 	for msg := range claim.Messages() {
-		log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(msg.Value), msg.Timestamp, msg.Topic)
+		logger.Logger.Sugar().Debugf("Message claimed: value = %s, timestamp = %v, topic = %s", string(msg.Value), msg.Timestamp, msg.Topic)
 
 		cacheMsg := new(datastruct.CacheMsg)
 		if err := json.Unmarshal(msg.Value, cacheMsg); err != nil {

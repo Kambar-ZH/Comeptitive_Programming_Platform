@@ -27,24 +27,23 @@ docker-compose up
 
 # API
 
-    WITHOUT AUTHENTICATION: <br />
-        localhost:8080/users <br />
-        localhost:8080/problemset <br />
-        localhost:8080/sessions?email=user_email& <br />password=user_password <br />
+    WITHOUT AUTHENTICATION:
+        localhost:8080/users
+        localhost:8080/problemset
+        localhost:8080/sessions?email=user_email&password=user_password
 
-    WITH AUTHENTICATION: <br />
-        localhost:8080/profile <br />
-        localhost:8080/contests <br />
-        localhost:8080/contests/1 <br />
-        localhost:8080/contests/1/submissions <br />
-        localhost:8080/contests/1/problems <br />
+    WITH AUTHENTICATION:
+        localhost:8080/profile
+        localhost:8080/contests
+        localhost:8080/contests/1
+        localhost:8080/contests/1/submissions
+        localhost:8080/contests/1/problems
         localhost:8080/contests/1/problems/1
 
 Open html page in web browser (web/template/index.html)
 
-Upload solution: <br />
-    for problem A (client_side/solutions/0001/solution.go) <br />
-
-    for problem B (client_side/solutions/0002/solution.go) <br />
+# Upload solution: 
+    for problem A (client_side/solutions/0001/solution.go) 
+    for problem B (client_side/solutions/0002/solution.go) 
 
 [Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)

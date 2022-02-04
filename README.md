@@ -30,9 +30,12 @@ docker-compose up
 # Migrations
 ### Copy content of **db/migrations/init.db.sql**
 
-### Open DataGrip, configure DSN as following:
-***
-![]("https://github.com/Kambar-ZH/Comeptitive_Programming_Platform/images/dsn_config.png?raw=true")
+### Open DataGrip, configure DSN as following (password amdinamdin):
+<p>
+    <img src="images/dsn_config.png" width="100%" height="100%" />
+</p>
+
+### Run sql commands with newly created session
 ***
 
 # API
@@ -60,3 +63,4 @@ docker-compose up
     for problem B (client_side/solutions/0002/solution.go) 
 
 [Report](https://github.com/Kambar-ZH/Golang_Midterm_Project/blob/master/Report.pdf)
+

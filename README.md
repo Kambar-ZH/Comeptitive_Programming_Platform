@@ -6,15 +6,13 @@
 
 # cmd
 2️⃣ Contains: 
- - main.go - entry point of the program
- - 2 go and exe files (participant_solution.go / participant_solution.exe and main_solution.go / main_solution.exe)
- - makefile that builds binaries for the participant_solution.go and main_solution.go
+ - main.go - entry point of the program.
 
 # internal
 3️⃣ Server and the logic of handling requests.
 
 # temp_solutions
-4️⃣ Storage of users' solution files.
+4️⃣ Storage of users' solutions.
 
 # web
 5️⃣ The frontend part (templates and css). 
@@ -30,12 +28,12 @@ docker-compose up
 # Migrations
 ### Copy content of **db/migrations/init.db.sql**
 
-### Open DataGrip, configure DSN as following (password amdinamdin):
+### Open DataGrip, configure DSN as following (password adminadmin):
 <p>
     <img src="images/dsn_config.png" width="100%" height="100%" />
 </p>
 
-### Run sql commands with newly created session
+### Run sql commands with newly created session.
 ***
 
 # API

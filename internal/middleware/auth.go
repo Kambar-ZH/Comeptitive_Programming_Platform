@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	SessionName        = "gopherschool"
+	SessionName = "gopherschool"
 )
 
 var (

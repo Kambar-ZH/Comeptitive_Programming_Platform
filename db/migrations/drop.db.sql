@@ -1,0 +1,11 @@
+DROP TABLE validators;
+DROP TABLE test_cases;
+DROP TABLE problem_results;
+DROP TABLE user_friends;
+DROP TABLE participants;
+DROP TABLE submissions;
+DROP TABLE problems_tags;
+DROP TABLE tags;
+DROP TABLE problems;
+DROP TABLE users;
+DROP TABLE contests;

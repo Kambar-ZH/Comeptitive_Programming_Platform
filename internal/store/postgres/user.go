@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/store"
 
 	"github.com/jmoiron/sqlx"
@@ -23,7 +24,7 @@ func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
 	return &UserRepository{conn: conn}
 }
 
-func (u UserRepository) All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error) {
+func (u UserRepository) FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error) {
 	users := make([]*datastruct.User, 0)
 	if req.Filter != "" {
 		if err := u.conn.Select(&users,
@@ -48,7 +49,7 @@ func (u UserRepository) All(ctx context.Context, req *datastruct.UserAllRequest)
 	return users, nil
 }
 
-func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
+func (u UserRepository) GetByEmail(ctx context.Context, email string) (*datastruct.User, error) {
 	user := new(datastruct.User)
 	if err := u.conn.Get(user,
 		`SELECT * 
@@ -60,7 +61,7 @@ func (u UserRepository) ByEmail(ctx context.Context, email string) (*datastruct.
 	return user, nil
 }
 
-func (u UserRepository) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
+func (u UserRepository) GetByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
 	user := new(datastruct.User)
 	if err := u.conn.Get(user,
 		`SELECT * 
@@ -86,7 +87,7 @@ func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error
 func (u UserRepository) Update(ctx context.Context, user *datastruct.User) error {
 	_, err := u.conn.Exec(
 		`UPDATE users 
-			SET(handle, email, country, city, encrypted_password) = ($1, $2, $3, $4, $5) 
+			SET handle = $1, email = $2, country = $3, city = $4, encrypted_password = $5 
 			WHERE handle = $1`,
 		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {

@@ -5,7 +5,7 @@ import "os"
 func DSN() string {
 	dsn := os.Getenv("DSN")
 	if (dsn == "") {
-		dsn = "postgres://postgres:adminadmin@localhost:5432/codeforces"
+		dsn = "postgres://postgres:adminadmin@localhost:54320/codeforces"
 	}
 	return dsn
 }
@@ -21,7 +21,7 @@ func KAFKA_CONN() string {
 func PEER() string {
 	peer := os.Getenv("PEER")
 	if (peer == "") {
-		peer = "peer1"
+		peer = "peer2"
 	}
 	return peer
 }
@@ -29,7 +29,7 @@ func PEER() string {
 func PORT() string {
 	port := os.Getenv("PORT")
 	if (port == "") {
-		port = ":8080"
+		port = ":8081"
 	}
 	return port
 }

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/store"
 
 	"github.com/jmoiron/sqlx"
@@ -23,10 +24,10 @@ func NewSubmissionRepository(conn *sqlx.DB) store.SubmissionRepository {
 	return &SubmissionRepository{conn: conn}
 }
 
-func (s SubmissionRepository) All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
+func (s SubmissionRepository) FindAll(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error) {
 	submissions := make([]*datastruct.Submission, 0)
 	if req.FilterUserHandle != "" {
-		if err := s.conn.Select(&submissions, 
+		if err := s.conn.Select(&submissions,
 			`SELECT submissions.* 
 				FROM users, submissions 
 				WHERE users.handle ILIKE $1 
@@ -34,33 +35,30 @@ func (s SubmissionRepository) All(ctx context.Context, req *datastruct.Submissio
 					AND contest_id = $2 
 				OFFSET $3 
 				LIMIT $4`,
-			"%"+req.FilterUserHandle+"%", req.ContestId, req.Offset, req.Limit); 
-		err != nil {
+			"%"+req.FilterUserHandle+"%", req.ContestId, req.Offset, req.Limit); err != nil {
 			return nil, err
 		}
 		return submissions, nil
 	}
-	if err := s.conn.Select(&submissions, 
+	if err := s.conn.Select(&submissions,
 		`SELECT * 
 			FROM submissions 
 			WHERE contest_id = $1 
 			OFFSET $2 
-			LIMIT $3`, 
-		req.ContestId, req.Offset, req.Limit); 
-	err != nil {
+			LIMIT $3`,
+		req.ContestId, req.Offset, req.Limit); err != nil {
 		return nil, err
 	}
 	return submissions, nil
 }
 
-func (s SubmissionRepository) ById(ctx context.Context, id int) (*datastruct.Submission, error) {
+func (s SubmissionRepository) GetById(ctx context.Context, id int) (*datastruct.Submission, error) {
 	submission := new(datastruct.Submission)
-	if err := s.conn.Get(submission, 
+	if err := s.conn.Get(submission,
 		`SELECT * 
 			FROM submissions 
-			WHERE id = $1`, 
-		id); 
-	err != nil {
+			WHERE id = $1`,
+		id); err != nil {
 		return nil, err
 	}
 	return submission, nil

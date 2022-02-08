@@ -25,7 +25,7 @@ type (
 		Error      error
 	}
 	RunTestCasesRequest struct {
-		FilePath  string
+		ParticipantSolutionFilePath  string
 		ProblemId int
 	}
 	RunTestCasesResponse struct {

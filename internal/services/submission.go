@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/logger"
 	messagebroker "site/internal/message_broker"
 	"site/internal/middleware"
@@ -21,11 +22,11 @@ var (
 )
 
 type SubmissionService interface {
-	All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
-	ById(ctx context.Context, req *datastruct.SubmissionByIdRequest) (*datastruct.Submission, error)
-	Create(ctx context.Context, req *datastruct.SubmissionCreateRequest) error
-	Update(ctx context.Context, req *datastruct.SubmissionUpdateRequest) error
-	Delete(ctx context.Context, req *datastruct.SubmissionDeleteRequest) error
+	All(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error)
+	ById(ctx context.Context, req *dto.SubmissionGetByIdRequest) (*datastruct.Submission, error)
+	Create(ctx context.Context, req *dto.SubmissionCreateRequest) error
+	Update(ctx context.Context, req *dto.SubmissionUpdateRequest) error
+	Delete(ctx context.Context, req *dto.SubmissionDeleteRequest) error
 }
 
 type SubmissionServiceImpl struct {
@@ -42,7 +43,7 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 	return svc
 }
 
-func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
+func (s SubmissionServiceImpl) All(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error) {
 	if req.FilterUserHandle != "" {
 		if value, ok := s.cache.Get(req.FilterUserHandle); ok {
 			if submissions, ok := value.([]*datastruct.Submission); ok {
@@ -53,7 +54,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.Submissi
 	}
 	req.Limit = submissionsPerPage
 	req.Offset = (req.Page - 1) * submissionsPerPage
-	submissions, err := s.store.Submissions().All(ctx, req)
+	submissions, err := s.store.Submissions().FindAll(ctx, req)
 	if req.FilterUserHandle != "" {
 		logger.Logger.Sugar().Debugf("query cached", submissions)
 		s.cache.Add(req.FilterUserHandle, submissions)
@@ -61,7 +62,7 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *datastruct.Submissi
 	return submissions, err
 }
 
-func (s SubmissionServiceImpl) ById(ctx context.Context, req *datastruct.SubmissionByIdRequest) (*datastruct.Submission, error) {
+func (s SubmissionServiceImpl) ById(ctx context.Context, req *dto.SubmissionGetByIdRequest) (*datastruct.Submission, error) {
 	value, ok := s.cache.Get(req.SubmissionId)
 	if ok {
 		if submission, ok := value.(*datastruct.Submission); ok {
@@ -71,7 +72,7 @@ func (s SubmissionServiceImpl) ById(ctx context.Context, req *datastruct.Submiss
 			return submission, nil
 		}
 	}
-	submission, err := s.store.Submissions().ById(ctx, int(req.SubmissionId))
+	submission, err := s.store.Submissions().GetById(ctx, int(req.SubmissionId))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (s SubmissionServiceImpl) ById(ctx context.Context, req *datastruct.Submiss
 	return submission, err
 }
 
-func (s SubmissionServiceImpl) Create(ctx context.Context, req *datastruct.SubmissionCreateRequest) error {
+func (s SubmissionServiceImpl) Create(ctx context.Context, req *dto.SubmissionCreateRequest) error {
 	user, ok := middleware.UserFromCtx(ctx)
 	if !ok {
 		return middleware.ErrNotAuthenticated
@@ -95,8 +96,8 @@ func (s SubmissionServiceImpl) Create(ctx context.Context, req *datastruct.Submi
 	return s.store.Submissions().Create(ctx, req.Submission)
 }
 
-func (s SubmissionServiceImpl) Update(ctx context.Context, req *datastruct.SubmissionUpdateRequest) error {
-	submission, err := s.store.Submissions().ById(ctx, int(req.Submission.Id))
+func (s SubmissionServiceImpl) Update(ctx context.Context, req *dto.SubmissionUpdateRequest) error {
+	submission, err := s.store.Submissions().GetById(ctx, int(req.Submission.Id))
 	if err != nil {
 		return err
 	}
@@ -108,8 +109,8 @@ func (s SubmissionServiceImpl) Update(ctx context.Context, req *datastruct.Submi
 	return s.store.Submissions().Update(ctx, req.Submission)
 }
 
-func (s SubmissionServiceImpl) Delete(ctx context.Context, req *datastruct.SubmissionDeleteRequest) error {
-	submission, err := s.store.Submissions().ById(ctx, int(req.SubmissionId))
+func (s SubmissionServiceImpl) Delete(ctx context.Context, req *dto.SubmissionDeleteRequest) error {
+	submission, err := s.store.Submissions().GetById(ctx, int(req.SubmissionId))
 	if err != nil {
 		return err
 	}

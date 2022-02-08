@@ -1,26 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"site/internal/datastruct"
-
-	"github.com/jmoiron/sqlx"
-
-	_ "github.com/jackc/pgx/stdlib"
+	"site/internal/tools"
+	"site/test/inmemory"
 )
 
 func main() {
-	urlAddress := "postgres://postgres:adminadmin@0.0.0.0:54320/codeforces"
-	conn, err := sqlx.Connect("pgx", urlAddress)
+	testCase := datastruct.TestCase{
+		TestFile: inmemory.AbsPath("test/problems/0001/tests/1.txt"),
+	}
+	res, err := tools.ExecuteFile(inmemory.AbsPath("test/problems/0001/solution.go"), testCase)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	users := make([]*datastruct.Contest, 0)
-	if err := conn.Select(&users, `SELECT * 
-	FROM contests`); err != nil {
-		panic(err)
-	}
-	for _, user := range users {
-		fmt.Println(user)
-	}
+	print(res)
 }

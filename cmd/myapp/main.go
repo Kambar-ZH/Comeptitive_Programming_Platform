@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"site/internal/config"
-	"site/internal/http"
+	http "site/internal/http/rest"
 	"site/internal/logger"
 	"site/internal/message_broker/kafka"
 	"site/internal/store/postgres"

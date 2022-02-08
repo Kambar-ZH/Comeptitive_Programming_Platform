@@ -1,4 +1,5 @@
 .exe
 .vscode
 temp_solutions/*
+vendor/
 !temp_solutions/.gitkeep

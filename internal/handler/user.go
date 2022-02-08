@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/services"
 
@@ -36,13 +37,13 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusCreated, nil)
 }
 
-func (uh *UserHandler) All(w http.ResponseWriter, r *http.Request) {
-	req := &datastruct.UserAllRequest{
+func (uh *UserHandler) FindAll(w http.ResponseWriter, r *http.Request) {
+	req := &dto.UserFindAllRequest{
 		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
 		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
 
-	users, err := uh.service.All(r.Context(), req)
+	users, err := uh.service.FindAll(r.Context(), req)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -50,10 +51,10 @@ func (uh *UserHandler) All(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusOK, users)
 }
 
-func (uh *UserHandler) ByHandle(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) GetByHandle(w http.ResponseWriter, r *http.Request) {
 	handle := chi.URLParam(r, "handle")
 
-	user, err := uh.service.ByHandle(r.Context(), handle)
+	user, err := uh.service.GetByHandle(r.Context(), handle)
 	if err != nil {
 		Error(w, r, http.StatusNotFound, err)
 		return

@@ -4,12 +4,14 @@ import (
 	"context"
 	"io/ioutil"
 	"mime/multipart"
+	"os"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
 	"site/internal/middleware"
 	"site/internal/store"
 	"site/test/inmemory"
-	"strings"
+	"time"
 )
 
 type UploadFileService interface {
@@ -34,41 +36,98 @@ func (u UploadFileServiceImpl) Create(ctx context.Context, submission *datastruc
 		return middleware.ErrNotAuthenticated
 	}
 	submission.UserId = user.Id
+	if err := u.assignPoints(ctx, submission); err != nil {
+		return err
+	}
 	return u.store.Submissions().Create(ctx, submission)
 }
 
-func (u UploadFileServiceImpl) SaveInmemory(dir string, file multipart.File) (string, error) {
-	tempFile, err := ioutil.TempFile(dir, "upload-*")
+func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *datastruct.Submission) error {
+	contest, err := u.store.Contests().GetById(ctx, int(submission.ContestId))
 	if err != nil {
-		return "", err
+		return err
 	}
-	fileBytes, err := ioutil.ReadAll(file)
+	if contest.Phase != dto.CODING.String() {
+		return nil
+	}
+	problem, err := u.store.Problems().GetById(ctx, int(submission.ProblemId))
 	if err != nil {
-		return "", err
+		return err
 	}
-	tempFile.Write(fileBytes)
-	defer tempFile.Close()
-	filePath := strings.ReplaceAll(tempFile.Name(), "\\\\", "/")
-	return filePath, nil
+
+	points := problem.Points
+	minutePassed := int32(time.Since(contest.StartDate) / time.Minute)
+	contestDuration := int32(contest.EndDate.Sub(contest.StartDate) / time.Minute)
+
+	if contestDuration != 0 {
+		points -= minutePassed / contestDuration * 100
+	}
+
+	problemResults, err := u.store.ProblemResults().GetByProblemId(ctx, &dto.ProblemResultsGetByProblemIdRequest{
+		ContestId: submission.ContestId,
+		ProblemId: submission.ProblemId,
+		UserId:    submission.UserId,
+	})
+	if err != nil {
+		logger.Logger.Error(err.Error())
+		problemResults = &datastruct.ProblemResults{
+			UserId:                       submission.UserId,
+			ProblemId:                    submission.ProblemId,
+			ContestId:                    submission.ContestId,
+			Points:                       points,
+			Penalty:                      0,
+			LastSuccessfulSubmissionTime: time.Now(),
+		}
+		u.store.ProblemResults().Create(ctx, problemResults)
+	}
+
+	if submission.Verdict != string(dto.PASSED) {
+		problemResults.Penalty++
+		problemResults.Points -= 50 * problemResults.Penalty
+	}
+
+	if err = u.store.ProblemResults().Update(ctx, problemResults); err != nil {
+		logger.Logger.Error("couldn't update problem results")
+		return err
+	}
+
+	return nil
 }
 
-func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
-	filePath, err := u.SaveInmemory(inmemory.TempSolutions(), req.File)
+func saveInMemory(dir string, file multipart.File) (*os.File, error) {
+	tempFile, err := ioutil.TempFile(dir, "*.go")
 	if err != nil {
 		return nil, err
 	}
+	defer tempFile.Close()
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	tempFile.Write(fileBytes)
+	return tempFile, nil
+}
+
+func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
+	// WARN: after saving file, closed
+	file, err := saveInMemory(inmemory.TempSolutions(), req.File)
+	if err != nil {
+		return nil, err
+	}
+	filePath := file.Name()
 	res, err := u.RunTestCases(ctx, &dto.RunTestCasesRequest{
-		FilePath:  filePath,
-		ProblemId: req.ProblemId,
+		ParticipantSolutionFilePath: filePath,
+		ProblemId:                   req.ProblemId,
 	})
 	if err != nil {
 		return nil, err
 	}
 	submission := &datastruct.Submission{
-		Verdict:    string(res.Verdict),
-		FailedTest: res.FailedTest,
-		ContestId:  int32(req.ContestId),
-		ProblemId:  int32(req.ProblemId),
+		Verdict:          string(res.Verdict),
+		FailedTest:       res.FailedTest,
+		ContestId:        int32(req.ContestId),
+		ProblemId:        int32(req.ProblemId),
+		SolutionFilePath: filePath,
 	}
 	if err = u.Create(ctx, submission); err != nil {
 		return nil, err
@@ -77,33 +136,23 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 }
 
 func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
-	validator, err := u.store.Validators().ByProblemId(ctx, req.ProblemId)
+	validator, err := u.store.Validators().GetByProblemId(ctx, req.ProblemId)
 	if err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
 	}
 
-	worker, err := NewWorker()
-	if err != nil {
-		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
-	}
-	defer worker.RemoveAll()
-
-	if err := worker.PrepareMainExe(validator.SolutionFilePath); err != nil {
-		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
-	}
-	if err := worker.PrepareUserExe(req.FilePath); err != nil {
-		return &dto.RunTestCasesResponse{Verdict: dto.COMPILATION_ERROR}, err
-	}
+	logger.Logger.Sugar().Debugf("%+v", validator)
+	logger.Logger.Sugar().Debugf("%+v", req)
 
 	for _, testCase := range validator.TestCases {
-		verdict, err := worker.RunTestCase(testCase)
+		verdict, err := RunTestCase(testCase, req.ParticipantSolutionFilePath, validator.AuthorSolutionFilePath)
 		if err != nil {
 			return nil, err
 		}
 		if verdict != dto.PASSED {
 			return &dto.RunTestCasesResponse{
 				Verdict:    verdict,
-				FailedTest: testCase.Id + 1,
+				FailedTest: testCase.Id,
 			}, nil
 		}
 	}

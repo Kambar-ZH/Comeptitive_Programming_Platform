@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"site/internal/datastruct"
+	"site/internal/dto"
 )
 
 type Store interface {
@@ -15,46 +16,61 @@ type Store interface {
 	TestCases() TestCaseRepository
 	Contests() ContestRepository
 	Problems() ProblemRepository
+	Participants() ParticipantRepository
+	ProblemResults() ProblemResultsRepository
 }
 
 type UserRepository interface {
-	All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error)
-	ByEmail(ctx context.Context, email string) (*datastruct.User, error)
-	ByHandle(ctx context.Context, handle string) (*datastruct.User, error)
+	FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error)
+	GetByEmail(ctx context.Context, email string) (*datastruct.User, error)
+	GetByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
 	Update(ctx context.Context, user *datastruct.User) error
 	Delete(ctx context.Context, handle string) error
 }
 
 type SubmissionRepository interface {
-	All(ctx context.Context, req *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error)
-	ById(ctx context.Context, id int) (*datastruct.Submission, error)
+	FindAll(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error)
+	GetById(ctx context.Context, id int) (*datastruct.Submission, error)
 	Create(ctx context.Context, submission *datastruct.Submission) error
 	Update(ctx context.Context, submission *datastruct.Submission) error
 	Delete(ctx context.Context, id int) error
 }
 
 type ValidatorRepository interface {
-	ByProblemId(ctx context.Context, problemId int) (*datastruct.Validator, error)
+	GetByProblemId(ctx context.Context, problemId int) (*datastruct.Validator, error)
 }
 
 type TestCaseRepository interface {
-	ByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error)
+	GetByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error)
 }
 
 type ContestRepository interface {
-	All(ctx context.Context, req *datastruct.ContestAllRequest) ([]*datastruct.Contest, error)
-	ById(ctx context.Context, id int) (*datastruct.Contest, error)
+	FindAll(ctx context.Context, req *dto.ContestFindAllRequest) ([]*datastruct.Contest, error)
+	GetById(ctx context.Context, id int) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error
 	Delete(ctx context.Context, id int) error
 }
 
 type ProblemRepository interface {
-	Problemset(ctx context.Context, req *datastruct.ProblemsetRequest) ([]*datastruct.Problem, error)
-	All(ctx context.Context, req *datastruct.ProblemAllRequest) ([]*datastruct.Problem, error)
-	ById(ctx context.Context, id int) (*datastruct.Problem, error)
+	Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error)
+	FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error)
+	GetById(ctx context.Context, id int) (*datastruct.Problem, error)
 	Create(ctx context.Context, problem *datastruct.Problem) error
 	Update(ctx context.Context, problem *datastruct.Problem) error
 	Delete(ctx context.Context, id int) error
+}
+
+type ParticipantRepository interface {
+	FindAll(ctx context.Context, req *dto.ParticipantFindAllRequest) ([]*datastruct.Participant, error)
+	FindFriends(ctx context.Context, req *dto.ParticipantFindFriendsRequest) ([]*datastruct.Participant, error)
+	GetByUserId(ctx context.Context, req *dto.ParticipantGetByUserIdRequest) (*datastruct.Participant, error)
+	Create(ctx context.Context, participant *datastruct.Participant) error
+}
+
+type ProblemResultsRepository interface {
+	Update(ctx context.Context, problemResults *datastruct.ProblemResults) error
+	GetByProblemId(ctx context.Context, req *dto.ProblemResultsGetByProblemIdRequest) (*datastruct.ProblemResults, error)
+	Create(ctx context.Context, problemResults *datastruct.ProblemResults) error
 }

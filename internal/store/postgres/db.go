@@ -13,12 +13,14 @@ import (
 type DB struct {
 	conn *sqlx.DB
 
-	users       store.UserRepository
-	submissions store.SubmissionRepository
-	contests    store.ContestRepository
-	validators  store.ValidatorRepository
-	testCases   store.TestCaseRepository
-	problems    store.ProblemRepository
+	users          store.UserRepository
+	submissions    store.SubmissionRepository
+	contests       store.ContestRepository
+	validators     store.ValidatorRepository
+	testCases      store.TestCaseRepository
+	problems       store.ProblemRepository
+	participants   store.ParticipantRepository
+	problemResults store.ProblemResultsRepository
 }
 
 func NewDB() store.Store {

@@ -1,2 +1,2 @@
 run:
-	go build -o $(exec) $(prog)
+	@go run $(filePath)

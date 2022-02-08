@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/store"
 )
@@ -12,9 +13,9 @@ const (
 )
 
 type UserService interface {
-	All(ctx context.Context, query *datastruct.UserAllRequest) ([]*datastruct.User, error)
-	ByEmail(ctx context.Context, email string) (*datastruct.User, error)
-	ByHandle(ctx context.Context, handle string) (*datastruct.User, error)
+	FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error)
+	GetByEmail(ctx context.Context, email string) (*datastruct.User, error)
+	GetByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
 	Update(ctx context.Context, user *datastruct.User) error
 	Delete(ctx context.Context, handle string) error
@@ -32,19 +33,19 @@ func NewUserService(opts ...UserServiceOption) UserService {
 	return svc
 }
 
-func (u UserServiceImpl) All(ctx context.Context, req *datastruct.UserAllRequest) ([]*datastruct.User, error) {
+func (u UserServiceImpl) FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error) {
 	req.Limit = usersPerPage
 	req.Offset = (req.Page - 1) * usersPerPage
-	users, err := u.store.Users().All(ctx, req)
+	users, err := u.store.Users().FindAll(ctx, req)
 	return users, err
 }
 
-func (u UserServiceImpl) ByEmail(ctx context.Context, email string) (*datastruct.User, error) {
-	return u.store.Users().ByEmail(ctx, email)
+func (u UserServiceImpl) GetByEmail(ctx context.Context, email string) (*datastruct.User, error) {
+	return u.store.Users().GetByEmail(ctx, email)
 }
 
-func (u UserServiceImpl) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
-	return u.store.Users().ByHandle(ctx, handle)
+func (u UserServiceImpl) GetByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
+	return u.store.Users().GetByHandle(ctx, handle)
 }
 
 func (u UserServiceImpl) Create(ctx context.Context, user *datastruct.User) error {
@@ -61,7 +62,7 @@ func (u UserServiceImpl) Create(ctx context.Context, user *datastruct.User) erro
 
 func (u UserServiceImpl) Update(ctx context.Context, user *datastruct.User) error {
 	// TODO: add admin permission
-	_, err := u.store.Users().ByHandle(ctx, user.Handle)
+	_, err := u.store.Users().GetByHandle(ctx, user.Handle)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (u UserServiceImpl) Update(ctx context.Context, user *datastruct.User) erro
 
 func (u UserServiceImpl) Delete(ctx context.Context, handle string) error {
 	// TODO: add admin permission
-	_, err := u.store.Users().ByHandle(ctx, handle)
+	_, err := u.store.Users().GetByHandle(ctx, handle)
 	if err != nil {
 		return err
 	}

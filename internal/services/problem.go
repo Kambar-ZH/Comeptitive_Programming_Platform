@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/store"
 )
 
@@ -16,12 +17,12 @@ const (
 )
 
 type ProblemService interface {
-	Problemset(ctx context.Context, query *datastruct.ProblemsetRequest) ([]*datastruct.Problem, error)
-	All(ctx context.Context, req *datastruct.ProblemAllRequest) ([]*datastruct.Problem, error)
-	ById(ctx context.Context, req *datastruct.ProblemByIdRequest) (*datastruct.Problem, error)
-	Create(ctx context.Context, req *datastruct.ProblemCreateRequest) error
-	Update(ctx context.Context, req *datastruct.ProblemUpdateRequest) error
-	Delete(ctx context.Context, req *datastruct.ProblemDeleteRequest) error
+	Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error)
+	FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error)
+	GetById(ctx context.Context, req *dto.ProblemGetByIdRequest) (*datastruct.Problem, error)
+	Create(ctx context.Context, req *dto.ProblemCreateRequest) error
+	Update(ctx context.Context, req *dto.ProblemUpdateRequest) error
+	Delete(ctx context.Context, req *dto.ProblemDeleteRequest) error
 }
 
 type ProblemServiceImpl struct {
@@ -36,20 +37,20 @@ func NewProblemService(opts ...ProblemServiceOption) ProblemService {
 	return svc
 }
 
-func (p ProblemServiceImpl) Problemset(ctx context.Context, req *datastruct.ProblemsetRequest) ([]*datastruct.Problem, error) {
+func (p ProblemServiceImpl) Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error) {
 	req.Limit = problemsPerPage
 	req.Offset = (req.Page - 1) * problemsPerPage
 	return p.store.Problems().Problemset(ctx, req)
 }
 
-func (p ProblemServiceImpl) All(ctx context.Context, req *datastruct.ProblemAllRequest) ([]*datastruct.Problem, error) {
+func (p ProblemServiceImpl) FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error) {
 	req.Limit = problemsPerPage
 	req.Offset = (req.Page - 1) * problemsPerPage
-	return p.store.Problems().All(ctx, req)
+	return p.store.Problems().FindAll(ctx, req)
 }
 
-func (p ProblemServiceImpl) ById(ctx context.Context, req *datastruct.ProblemByIdRequest) (*datastruct.Problem, error) {
-	problem, err := p.store.Problems().ById(ctx, int(req.ProblemId))
+func (p ProblemServiceImpl) GetById(ctx context.Context, req *dto.ProblemGetByIdRequest) (*datastruct.Problem, error) {
+	problem, err := p.store.Problems().GetById(ctx, int(req.ProblemId))
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +60,14 @@ func (p ProblemServiceImpl) ById(ctx context.Context, req *datastruct.ProblemByI
 	return problem, nil
 }
 
-func (p ProblemServiceImpl) Create(ctx context.Context, req *datastruct.ProblemCreateRequest) error {
+func (p ProblemServiceImpl) Create(ctx context.Context, req *dto.ProblemCreateRequest) error {
 	req.Problem.ContestId = req.ContestId
 	return p.store.Problems().Create(ctx, req.Problem)
 }
 
-func (p ProblemServiceImpl) Update(ctx context.Context, req *datastruct.ProblemUpdateRequest) error {
+func (p ProblemServiceImpl) Update(ctx context.Context, req *dto.ProblemUpdateRequest) error {
 	// TODO: add admin permission
-	problem, err := p.store.Problems().ById(ctx, int(req.Problem.Id))
+	problem, err := p.store.Problems().GetById(ctx, int(req.Problem.Id))
 	if err != nil {
 		return err
 	}
@@ -76,9 +77,9 @@ func (p ProblemServiceImpl) Update(ctx context.Context, req *datastruct.ProblemU
 	return p.store.Problems().Update(ctx, req.Problem)
 }
 
-func (p ProblemServiceImpl) Delete(ctx context.Context, req *datastruct.ProblemDeleteRequest) error {
+func (p ProblemServiceImpl) Delete(ctx context.Context, req *dto.ProblemDeleteRequest) error {
 	// TODO: add admin permission
-	problem, err := p.store.Problems().ById(ctx, int(req.ProblemId))
+	problem, err := p.store.Problems().GetById(ctx, int(req.ProblemId))
 	if err != nil {
 		return err
 	}

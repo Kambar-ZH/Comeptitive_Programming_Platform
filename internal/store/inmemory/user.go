@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -16,7 +17,7 @@ type UserRepo struct {
 }
 
 
-func (db *UserRepo) All(ctx context.Context, query *datastruct.UserAllRequest) ([]*datastruct.User, error) {
+func (db *UserRepo) All(ctx context.Context, query *dto.UserFindAllRequest) ([]*datastruct.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 

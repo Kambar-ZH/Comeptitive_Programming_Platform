@@ -12,6 +12,7 @@ type UploadFileHandlerOption func(uf *UploadFileHandler)
 type AuthHandlerOption func(s *AuthHandler)
 type ContestHandlerOption func(c *ContestHander)
 type ProblemHandlerOption func(p *ProblemHandler)
+type ParticipantHandlerOption func(p *ParticipantHandler)
 
 
 func WithUserService(service services.UserService) UserHandlerOption {
@@ -52,6 +53,12 @@ func WithContestService(service services.ContestService) ContestHandlerOption {
 
 func WithProblemService(service services.ProblemService) ProblemHandlerOption {
 	return func(p *ProblemHandler) {
+		p.service = service
+	}
+}
+
+func WithParticipantService(service services.ParticipantService) ParticipantHandlerOption {
+	return func(p *ParticipantHandler) {
 		p.service = service
 	}
 }

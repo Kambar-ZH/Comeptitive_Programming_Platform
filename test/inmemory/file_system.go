@@ -31,8 +31,8 @@ func RatingsHtml() string {
 	return AbsPath(relativePath)
 }
 func TempSolutions() string {
-	relativePath := "../../temp_solutions"
-	return relativePath
+	relativePath := "temp_solutions"
+	return AbsPath(relativePath)
 }
 func MakeMe() string {
 	relativePath := "makeme"

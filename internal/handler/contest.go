@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/services"
 	"strconv"
@@ -36,13 +37,13 @@ func (ch *ContestHander) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (ch *ContestHander) All(w http.ResponseWriter, r *http.Request) {
-	req := &datastruct.ContestAllRequest{
+func (ch *ContestHander) FindAll(w http.ResponseWriter, r *http.Request) {
+	req := &dto.ContestFindAllRequest{
 		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
 		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
 	}
 
-	contests, err := ch.service.All(r.Context(), req)
+	contests, err := ch.service.FindAll(r.Context(), req)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -50,7 +51,7 @@ func (ch *ContestHander) All(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusOK, contests)
 }
 
-func (ch *ContestHander) ById(w http.ResponseWriter, r *http.Request) {
+func (ch *ContestHander) GetById(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "contestId")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -58,7 +59,7 @@ func (ch *ContestHander) ById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contest, err := ch.service.ById(r.Context(), id)
+	contest, err := ch.service.GetById(r.Context(), id)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -75,7 +76,7 @@ func (ch *ContestHander) Update(w http.ResponseWriter, r *http.Request) {
 	err := ch.service.Update(r.Context(), contest)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
-		return 
+		return
 	}
 	Respond(w, r, http.StatusAccepted, nil)
 }

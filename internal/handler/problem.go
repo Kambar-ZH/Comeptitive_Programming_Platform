@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/services"
 	"strconv"
@@ -36,7 +37,7 @@ func (ph *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ph.service.Create(r.Context(), &datastruct.ProblemCreateRequest{
+	err = ph.service.Create(r.Context(), &dto.ProblemCreateRequest{
 		Problem:   problem,
 		ContestId: int32(contestId),
 	})
@@ -69,7 +70,7 @@ func (ph *ProblemHandler) Problemset(w http.ResponseWriter, r *http.Request) {
 
 	filterTag := r.URL.Query().Get("filterTag")
 
-	req := &datastruct.ProblemsetRequest{
+	req := &dto.ProblemsetRequest{
 		Page:          int32(page),
 		MinDifficulty: int32(minDifficulty),
 		MaxDifficulty: int32(maxDifficulty),
@@ -84,7 +85,7 @@ func (ph *ProblemHandler) Problemset(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusOK, problems)
 }
 
-func (ph *ProblemHandler) All(w http.ResponseWriter, r *http.Request) {
+func (ph *ProblemHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 
 	contestIdStr := chi.URLParam(r, "contestId")
 	contestId, err := strconv.Atoi(contestIdStr)
@@ -93,12 +94,12 @@ func (ph *ProblemHandler) All(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := &datastruct.ProblemAllRequest{
+	req := &dto.ProblemFindAllRequest{
 		Page:      r.Context().Value(middleware.CtxKeyPage).(int32),
 		ContestId: int32(contestId),
 	}
 
-	problems, err := ph.service.All(r.Context(), req)
+	problems, err := ph.service.FindAll(r.Context(), req)
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
@@ -106,7 +107,7 @@ func (ph *ProblemHandler) All(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusOK, problems)
 }
 
-func (ph *ProblemHandler) ById(w http.ResponseWriter, r *http.Request) {
+func (ph *ProblemHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -119,7 +120,7 @@ func (ph *ProblemHandler) ById(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	submission, err := ph.service.ById(r.Context(), &datastruct.ProblemByIdRequest{
+	submission, err := ph.service.GetById(r.Context(), &dto.ProblemGetByIdRequest{
 		ProblemId: int32(id),
 		ContestId: int32(contestId),
 	})
@@ -143,7 +144,7 @@ func (ph *ProblemHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ph.service.Update(r.Context(), &datastruct.ProblemUpdateRequest{
+	err = ph.service.Update(r.Context(), &dto.ProblemUpdateRequest{
 		Problem:   problem,
 		ContestId: int32(contestId),
 	})
@@ -168,7 +169,7 @@ func (ph *ProblemHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ph.service.Delete(r.Context(), &datastruct.ProblemDeleteRequest{
+	err = ph.service.Delete(r.Context(), &dto.ProblemDeleteRequest{
 		ProblemId: int32(id),
 		ContestId: int32(contestId),
 	})

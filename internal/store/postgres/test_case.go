@@ -23,7 +23,7 @@ func NewTestCaseRepository(conn *sqlx.DB) store.TestCaseRepository {
 	return &TestCaseRepository{conn: conn}
 }
 
-func (v TestCaseRepository) ByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error) {
+func (v TestCaseRepository) GetByProblemId(ctx context.Context, problemId int) ([]*datastruct.TestCase, error) {
 	testCases := make([]*datastruct.TestCase, 0)
 	err := v.conn.Select(&testCases, 
 		`SELECT * 

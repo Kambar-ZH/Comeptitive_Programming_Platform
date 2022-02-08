@@ -31,7 +31,7 @@ func NewAuthService(opts ...AuthServiceOption) AuthService {
 }
 
 func (a AuthServiceImpl) ByEmail(ctx context.Context, req *dto.Cridentials) (*datastruct.User, error) {
-	user, err := a.store.Users().ByEmail(ctx, req.Email)
+	user, err := a.store.Users().GetByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -42,5 +42,5 @@ func (a AuthServiceImpl) ByEmail(ctx context.Context, req *dto.Cridentials) (*da
 }
 
 func (a AuthServiceImpl) ByHandle(ctx context.Context, handle string) (*datastruct.User, error) {
-	return a.store.Users().ByHandle(ctx, handle)
+	return a.store.Users().GetByHandle(ctx, handle)
 }

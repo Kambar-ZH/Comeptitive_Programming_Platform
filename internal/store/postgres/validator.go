@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/store"
+	"site/test/inmemory"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,7 +24,7 @@ func NewValidatorRepository(conn *sqlx.DB) store.ValidatorRepository {
 	return &ValidatorRepository{conn: conn}
 }
 
-func (v ValidatorRepository) ByProblemId(ctx context.Context, problemId int) (*datastruct.Validator, error) {
+func (v ValidatorRepository) GetByProblemId(ctx context.Context, problemId int) (*datastruct.Validator, error) {
 	validator := new(datastruct.Validator)
 	err := v.conn.Get(validator, 
 		`SELECT * 
@@ -42,6 +43,14 @@ func (v ValidatorRepository) ByProblemId(ctx context.Context, problemId int) (*d
 	if err != nil {
 		return nil, err
 	}
+	
+	// Get Abs Path to validator and testcases
+	validator.AuthorSolutionFilePath = inmemory.AbsPath(validator.AuthorSolutionFilePath)
+	for i := range testCases {
+		testCases[i].TestFile = inmemory.AbsPath(testCases[i].TestFile)
+	}
+	
 	validator.TestCases = testCases
+
 	return validator, nil
 }

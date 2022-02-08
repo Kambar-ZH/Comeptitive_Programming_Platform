@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"site/internal/datastruct"
+	"site/internal/dto"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -16,7 +17,7 @@ type SubmissionRepo struct {
 }
 
 
-func (db *SubmissionRepo) All(ctx context.Context, query *datastruct.SubmissionAllRequest) ([]*datastruct.Submission, error) {
+func (db *SubmissionRepo) All(ctx context.Context, query *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 

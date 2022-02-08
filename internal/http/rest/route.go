@@ -19,6 +19,7 @@ func (s *Server) basicHandler() chi.Router {
 	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
 	cs := services.NewContestService(services.ContestServiceWithStore(s.store))
 	ps := services.NewProblemService(services.ProblemServiceWithStore(s.store))
+	ps2 := services.NewParticipantRepository(services.ParticipantServiceWithStore(s.store))
 
 	uh := handler.NewUserHandler(handler.WithUserService(us))
 	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
@@ -26,6 +27,7 @@ func (s *Server) basicHandler() chi.Router {
 	ah := handler.NewAuthHandler(handler.WithAuthService(as), handler.WithSessionStore(s.sessionStore))
 	ch := handler.NewContestHandler(handler.WithContestService(cs))
 	ph := handler.NewProblemHandler(handler.WithProblemService(ps))
+	ph2 := handler.NewParticipantHandler(handler.WithParticipantService(ps2))
 
 	s.PrepareUserRoutes(r, uh)
 
@@ -40,14 +42,17 @@ func (s *Server) basicHandler() chi.Router {
 
 	r.HandleFunc("/sessions", ah.CreateSession())
 	r.Route("/contests", func(r chi.Router) {
-		r.Use(ah.AuthenticateUser)
+		r.Get("/", ch.FindAll)
 		r.Post("/", ch.Create)
-		r.With(middleware.Paginate).Get("/", ch.All)
+		r.With(middleware.Paginate).Get("/", ch.FindAll)
 		r.Put("/", ch.Update)
 		r.Delete("/{id}", ch.Delete)
 		r.Route("/{contestId}", func(r chi.Router) {
-			r.Get("/", ch.ById)
-			s.PrepareSubmissionRoutes(r, sh)
+			r.Use(ah.AuthenticateUser)
+			r.Post("/register", ph2.Register)
+			r.Get("/", ch.GetById)
+			s.PrepareSubmissionRoutes(r.With(ah.AuthenticateUser), sh)
+			s.PrepareParticipantsRoutes(r.With(ah.AuthenticateUser), ph2)
 			s.PrepareProblemRoutes(r, ph)
 			r.HandleFunc("/upload", ufh.UploadFile())
 		})
@@ -58,8 +63,8 @@ func (s *Server) basicHandler() chi.Router {
 func (s *Server) PrepareProblemRoutes(r chi.Router, h *handler.ProblemHandler) {
 	r.Route("/problems", func(r chi.Router) {
 		r.Post("/", h.Create)
-		r.With(middleware.Paginate).Get("/", h.All)
-		r.Get("/{id}", h.ById)
+		r.With(middleware.Paginate).Get("/", h.FindAll)
+		r.Get("/{id}", h.GetById)
 		r.Put("/", h.Update)
 		r.Delete("/{id}", h.Delete)
 	})
@@ -68,8 +73,8 @@ func (s *Server) PrepareProblemRoutes(r chi.Router, h *handler.ProblemHandler) {
 func (s *Server) PrepareUserRoutes(r chi.Router, h *handler.UserHandler) {
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", h.Create)
-		r.With(middleware.Paginate).Get("/", h.All)
-		r.Get("/{handle}", h.ByHandle)
+		r.With(middleware.Paginate).Get("/", h.FindAll)
+		r.Get("/{handle}", h.GetByHandle)
 		r.Put("/", h.Update)
 		r.Delete("/{handle}", h.Delete)
 	})
@@ -78,8 +83,8 @@ func (s *Server) PrepareUserRoutes(r chi.Router, h *handler.UserHandler) {
 func (s *Server) PrepareSubmissionRoutes(r chi.Router, h *handler.SubmissionHandler) {
 	r.Route("/submissions", func(r chi.Router) {
 		r.Post("/", h.Create)
-		r.With(middleware.Paginate).Get("/", h.All)
-		r.Get("/{id}", h.ById)
+		r.With(middleware.Paginate).Get("/", h.FindAll)
+		r.Get("/{id}", h.GetById)
 		r.Put("/", h.Update)
 		r.Delete("/{id}", h.Delete)
 	})
@@ -88,9 +93,16 @@ func (s *Server) PrepareSubmissionRoutes(r chi.Router, h *handler.SubmissionHand
 func (s *Server) PrepareContestRoutes(r chi.Router, h *handler.ContestHander) {
 	r.Route("/contests", func(r chi.Router) {
 		r.Post("/", h.Create)
-		r.With(middleware.Paginate).Get("/", h.All)
-		r.Get("/{id}", h.ById)
+		r.With(middleware.Paginate).Get("/", h.FindAll)
+		r.Get("/{id}", h.GetById)
 		r.Put("/", h.Update)
 		r.Delete("/{id}", h.Delete)
+	})
+}
+
+func (s *Server) PrepareParticipantsRoutes(r chi.Router, h *handler.ParticipantHandler) {
+	r.Route("/standings", func(r chi.Router) {
+		r.With(middleware.Paginate).Get("/", h.FindAll)
+		r.With(middleware.Paginate).Get("/friends", h.FindFriends)
 	})
 }

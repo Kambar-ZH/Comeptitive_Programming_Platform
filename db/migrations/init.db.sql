@@ -1,6 +1,8 @@
+
 CREATE TABLE contests (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) DEFAULT '',
+    phase VARCHAR(255) DEFAULT '',
     start_date DATE DEFAULT NOW(),
     end_date DATE DEFAULT NOW(),
     description VARCHAR(255) DEFAULT ''
@@ -17,7 +19,7 @@ CREATE TABLE problems (
     difficulty INTEGER,
     CONSTRAINT fk_contests
       FOREIGN KEY(contest_id)
-	      REFERENCES contests(id)
+	      REFERENCES contests("id")
 );
 
 CREATE TABLE tags (
@@ -54,7 +56,7 @@ CREATE TABLE submissions (
     id BIGSERIAL PRIMARY KEY,
     contest_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    submission_date DATE DEFAULT NOW(),
+    submission_time DATE DEFAULT NOW(),
     problem_id INTEGER NOT NULL,
     verdict VARCHAR(255) NOT NULL,
     failed_test INTEGER DEFAULT 0,
@@ -87,9 +89,55 @@ CREATE TABLE validators (
 	      REFERENCES problems(id)
 );
 
+CREATE TABLE participants (
+    user_id INTEGER,
+    contest_id INTEGER,
+    participant_type VARCHAR(255),
+    room INTEGER,
+    PRIMARY KEY(user_id, contest_id),
+    FOREIGN KEY(contest_id)
+        REFERENCES contests(id),
+    FOREIGN KEY(user_id)
+        REFERENCES users(id)
+);
+
+CREATE TABLE problem_results (
+    contest_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    problem_id INTEGER NOT NULL,
+    points INTEGER,
+    penalty INTEGER,
+    last_successful_submission_time DATE DEFAULT NOW(),
+    FOREIGN KEY(contest_id)
+        REFERENCES contests(id),
+    FOREIGN KEY(user_id)
+        REFERENCES users(id),
+    FOREIGN KEY(problem_id)
+        REFERENCES problems(id)
+);
+
+CREATE TABLE user_friends (
+    user_id INTEGER,
+    friend_id INTEGER,
+    PRIMARY KEY(user_id, friend_id),
+    FOREIGN KEY(user_id)
+        REFERENCES users(id),
+    FOREIGN KEY(friend_id)
+        REFERENCES users(id)
+);
+
+SELECT participants.*
+	FROM participants, users, user_friends
+	WHERE participants.contest_id = 1
+	AND user_friends.user_id = participants.user_id
+	AND (users.id = user_friends.friend_id OR users.id = participants.user_id)
+	OFFSET 0
+	LIMIT 100;
+
 INSERT INTO contests (
-    name
-) VALUES ('Div3 755');
+    name,
+    phase
+) VALUES ('Div3 755', 'CODING');
 
 INSERT INTO problems (
     contest_id,
@@ -104,28 +152,28 @@ INSERT INTO problems (
 
 INSERT INTO tags (
     name
-) VALUES ('dp'), 
-    ('math'), 
-    ('constructive'), 
-    ('binary search'), 
+) VALUES ('dp'),
+    ('math'),
+    ('constructive'),
+    ('binary search'),
     ('sort');
 
 INSERT INTO problems_tags (
     problem_id,
     tag_id
-) VALUES (1, 3), 
+) VALUES (1, 3),
     (2, 2);
 
 INSERT INTO test_cases (
     problem_id,
     test_file
-) VALUES (1, '../../test/problems/0001/tests/1.txt'),
-    (1, '../../test/problems/0001/tests/2.txt'),
-    (2, '../../test/problems/0002/tests/1.txt'),
-    (2, '../../test/problems/0002/tests/2.txt');
+) VALUES (1, 'test/problems/0001/tests/1.txt'),
+    (1, 'test/problems/0001/tests/2.txt'),
+    (2, 'test/problems/0002/tests/1.txt'),
+    (2, 'test/problems/0002/tests/2.txt');
 
 INSERT INTO validators (
     problem_id,
     solution_file
-) VALUES (1, '../../test/problems/0001/solution.go'),
-    (2, '../../test/problems/0002/solution.go');
+) VALUES (1, 'test/problems/0001/solution.go'),
+    (2, 'test/problems/0002/solution.go');

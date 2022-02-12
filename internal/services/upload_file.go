@@ -85,7 +85,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 
 	if submission.Verdict != string(dto.PASSED) {
 		problemResults.Penalty++
-		problemResults.Points -= 50 * problemResults.Penalty
+		problemResults.Points -= 50
 	}
 
 	if err = u.store.ProblemResults().Update(ctx, problemResults); err != nil {
@@ -143,9 +143,6 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTes
 	if err != nil {
 		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
 	}
-
-	logger.Logger.Sugar().Debugf("%+v", validator)
-	logger.Logger.Sugar().Debugf("%+v", req)
 
 	for _, testCase := range validator.TestCases {
 		verdict, err := RunTestCase(testCase, req.ParticipantSolutionFilePath, validator.AuthorSolutionFilePath)

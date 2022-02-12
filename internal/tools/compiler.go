@@ -1,21 +1,61 @@
 package tools
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"site/internal/datastruct"
 	"site/internal/logger"
 	"site/test/inmemory"
+	"strings"
 	"time"
 )
 
+var (
+	ExtensionRegex = regexp.MustCompile(`.*\.`)
+)
+
 func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) {
-	env := fmt.Sprintf("filePath='%s'", filePath)
-	cmd := exec.Command("make", "run", env)
+	extension := ExtensionRegex.ReplaceAllString(filePath, "")
+	
+	var cmd *exec.Cmd
+
+	switch extension {
+
+	case "go":
+		env := fmt.Sprintf("filePath='%s'", filePath)
+		cmd = exec.Command("make", "run_go_file", env)
+
+	case "c++":
+		env := fmt.Sprintf("filePath='%s'", filePath)
+		executablePath := strings.TrimSuffix(filePath, extension) + "out"
+		env2 := fmt.Sprintf("executablePath=%s", executablePath)
+		cmd = exec.Command("make", "run_cpp_file", env, env2)
+		defer func() {
+			cmd = exec.Command("make", "rm_cpp_executable", env2)
+			cmd.Dir = inmemory.MakeMe()
+
+			var errorOut bytes.Buffer
+			cmd.Stderr = &errorOut
+			
+			if err := cmd.Run(); err != nil {
+				logger.Logger.Error(errorOut.String())
+			}
+		}()
+
+	case "py":
+		env := fmt.Sprintf("filePath='%s'", filePath)
+		cmd = exec.Command("make", "run_py_file", env)
+	}
 
 	cmd.Dir = inmemory.MakeMe()
+
+	var errorOut bytes.Buffer
+	cmd.Stderr = &errorOut
 
 	stdin, err := cmd.StdinPipe()
 	defer func() {
@@ -25,7 +65,7 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 	}()
 	if err != nil {
 		logger.Logger.Error("error on stdinpipe")
-		return "", err
+		return "", errors.New(errorOut.String())
 	}
 
 	stdout, err := cmd.StdoutPipe()
@@ -35,12 +75,11 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 		}
 	}()
 	if err != nil {
-		return "", err
+		return "", errors.New(errorOut.String())
 	}
 
-
 	if err := cmd.Start(); err != nil {
-		return "", err
+		return "", errors.New(errorOut.String())
 	}
 
 	input, err := os.ReadFile(testCase.TestFile)
@@ -50,7 +89,7 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 
 	_, err = stdin.Write(input)
 	if err != nil {
-		return "", err
+		return "", errors.New(errorOut.String())
 	}
 
 	result, err := ioutil.ReadAll(stdout)

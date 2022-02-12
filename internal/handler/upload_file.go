@@ -26,7 +26,7 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 
 		r.ParseMultipartForm(10 << 20)
 
-		file, _, err := r.FormFile("myFile")
+		file, multipartFileHeader, err := r.FormFile("myFile")
 		if err != nil {
 			Error(w, r, http.StatusInternalServerError, err)
 			return
@@ -47,6 +47,7 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			ProblemId: problemId,
 			ContestId: contestId,
 			File:      file,
+			FileName:  multipartFileHeader.Filename,
 		})
 		if err != nil {
 			Error(w, r, http.StatusInternalServerError, err)

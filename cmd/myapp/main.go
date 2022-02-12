@@ -15,6 +15,8 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 )
 
+// ctrl + / to make function
+
 func main() {
 	store := postgres.NewDB()
 	if err := store.Connect(config.DSN()); err != nil {
@@ -43,8 +45,8 @@ func main() {
 
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
 
-	brokers := []string{config.KAFKA_CONN()}
-	broker := kafka.NewBroker(brokers, cache, config.PEER())
+	brokers := []string{config.KafkaConn()}
+	broker := kafka.NewBroker(brokers, cache, config.PeerName())
 	if err := broker.Connect(ctx); err != nil {
 		logger.Logger.Error(err.Error())
 		os.Exit(1)
@@ -53,7 +55,7 @@ func main() {
 
 	srv := http.NewServer(
 		ctx,
-		http.WithAddress(config.PORT()),
+		http.WithAddress(config.ServePort()),
 		http.WithStore(store),
 		http.WithSessionStore(sessionStore),
 		http.WithCache(cache),

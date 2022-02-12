@@ -1,35 +1,53 @@
 package config
 
-import "os"
+import (
+	"os"
+)
 
 func DSN() string {
 	dsn := os.Getenv("DSN")
-	if (dsn == "") {
+	if dsn == "" {
 		dsn = "postgres://postgres:adminadmin@localhost:54320/codeforces"
 	}
 	return dsn
 }
 
-func KAFKA_CONN() string {
+func KafkaConn() string {
 	kafka_conn := os.Getenv("KAFKA_CONN")
-	if (kafka_conn == "") {
+	if kafka_conn == "" {
 		kafka_conn = "localhost:29092"
 	}
 	return kafka_conn
 }
 
-func PEER() string {
+func PeerName() string {
 	peer := os.Getenv("PEER")
-	if (peer == "") {
+	if peer == "" {
 		peer = "peer2"
 	}
 	return peer
 }
 
-func PORT() string {
+func ServePort() string {
 	port := os.Getenv("PORT")
-	if (port == "") {
+	if port == "" {
 		port = ":8081"
 	}
 	return port
+}
+
+func TelebotToken() string {
+	token := os.Getenv("TELEBOT_TOKEN")
+	if token == "" {
+		token = "1752339795:AAFomsaP4I3hr2Xh6QYi3s09Yyps6nEGGM4"
+	}
+	return token
+}
+
+func TelebotChannelName() string {
+	channelName := os.Getenv("TELEBOT_CHANNEL_NAME")
+	if channelName == "" {
+		channelName = "@CompetitiveProgrammingPlatform"
+	}
+	return channelName
 }

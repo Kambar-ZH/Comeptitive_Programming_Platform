@@ -9,12 +9,11 @@ import (
 
 type UserServiceOption func(u *UserServiceImpl)
 type SubmissionServiceOption func(s *SubmissionServiceImpl)
-type UploadFileServiceOption func(s *UploadFileServiceImpl)
-type AuthServiceOption func(s *AuthServiceImpl)
-type ContestServiceOption func(s *ContestServiceImpl)
-type ProblemServiceOption func(s *ProblemServiceImpl)
-type ParticipantServiceOption func(s *ParticipantServiceImpl)
-
+type UploadFileServiceOption func(uf *UploadFileServiceImpl)
+type AuthServiceOption func(a *AuthServiceImpl)
+type ContestServiceOption func(c *ContestServiceImpl)
+type ProblemServiceOption func(p *ProblemServiceImpl)
+type ParticipantServiceOption func(p *ParticipantServiceImpl)
 
 func UserServiceWithStore(store store.Store) UserServiceOption {
 	return func(u *UserServiceImpl) {

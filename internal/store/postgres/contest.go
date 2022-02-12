@@ -2,11 +2,10 @@ package postgres
 
 import (
 	"context"
+	"github.com/jmoiron/sqlx"
 	"site/internal/datastruct"
 	"site/internal/dto"
 	"site/internal/store"
-
-	"github.com/jmoiron/sqlx"
 )
 
 func (db *DB) Contests() store.ContestRepository {
@@ -26,13 +25,26 @@ func NewContestsRepository(conn *sqlx.DB) store.ContestRepository {
 
 func (c ContestRepository) FindAll(ctx context.Context, query *dto.ContestFindAllRequest) ([]*datastruct.Contest, error) {
 	contests := make([]*datastruct.Contest, 0)
-	if err := c.conn.Select(&contests, 
+	if err := c.conn.Select(&contests,
 		`SELECT * 
 			FROM contests 
+			ORDER BY start_date DESC
 			OFFSET $1 
-			LIMIT $2`, 
-		query.Offset, query.Limit); 
-	err != nil {
+			LIMIT $2`,
+		query.Offset, query.Limit); err != nil {
+		return nil, err
+	}
+	return contests, nil
+}
+
+func (c ContestRepository) FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeInterval) ([]*datastruct.Contest, error) {
+	contests := make([]*datastruct.Contest, 0)
+	if err := c.conn.Select(&contests,
+		`SELECT * 
+			FROM contests 
+			WHERE start_date 
+			    BETWEEN $1 AND $2`,
+		req.StartTime, req.EndTime); err != nil {
 		return nil, err
 	}
 	return contests, nil
@@ -40,12 +52,11 @@ func (c ContestRepository) FindAll(ctx context.Context, query *dto.ContestFindAl
 
 func (c ContestRepository) GetById(ctx context.Context, id int) (*datastruct.Contest, error) {
 	contest := new(datastruct.Contest)
-	if err := c.conn.Get(contest, 
+	if err := c.conn.Get(contest,
 		`SELECT * 
 			FROM contests 
-			WHERE id = $1`, 
-		id); 
-	err != nil {
+			WHERE id = $1`,
+		id); err != nil {
 		return nil, err
 	}
 	return contest, nil

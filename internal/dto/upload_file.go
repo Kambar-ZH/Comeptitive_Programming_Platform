@@ -17,6 +17,7 @@ type (
 	Verdict           string
 	UploadFileRequest struct {
 		File      multipart.File
+		FileName  string
 		ProblemId int
 		ContestId int
 	}
@@ -25,8 +26,8 @@ type (
 		Error      error
 	}
 	RunTestCasesRequest struct {
-		ParticipantSolutionFilePath  string
-		ProblemId int
+		ParticipantSolutionFilePath string
+		ProblemId                   int
 	}
 	RunTestCasesResponse struct {
 		Verdict    Verdict

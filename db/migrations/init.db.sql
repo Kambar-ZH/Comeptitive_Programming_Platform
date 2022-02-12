@@ -126,6 +126,11 @@ CREATE TABLE user_friends (
         REFERENCES users(id)
 );
 
+CREATE TABLE telegram_accounts (
+    chat_id INTEGER PRIMARY KEY,
+    user_name VARCHAR(255)
+);
+
 SELECT participants.*
 	FROM participants, users, user_friends
 	WHERE participants.contest_id = 1

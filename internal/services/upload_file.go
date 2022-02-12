@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"site/internal/logger"
 	"site/internal/middleware"
 	"site/internal/store"
+	"site/internal/tools"
 	"site/test/inmemory"
 	"time"
 )
@@ -94,8 +96,9 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 	return nil
 }
 
-func saveInMemory(dir string, file multipart.File) (*os.File, error) {
-	tempFile, err := ioutil.TempFile(dir, "*.go")
+func saveInMemory(dir string, file multipart.File, fileName string) (*os.File, error) {
+	fileExtension := tools.ExtensionRegex.ReplaceAllString(fileName, "")
+	tempFile, err := ioutil.TempFile(dir, fmt.Sprintf("*.%s", fileExtension))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +113,7 @@ func saveInMemory(dir string, file multipart.File) (*os.File, error) {
 
 func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
 	// WARN: after saving file, closed
-	file, err := saveInMemory(inmemory.TempSolutions(), req.File)
+	file, err := saveInMemory(inmemory.TempSolutions(), req.File, req.FileName)
 	if err != nil {
 		return nil, err
 	}

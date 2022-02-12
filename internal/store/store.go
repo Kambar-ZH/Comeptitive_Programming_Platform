@@ -47,6 +47,7 @@ type TestCaseRepository interface {
 
 type ContestRepository interface {
 	FindAll(ctx context.Context, req *dto.ContestFindAllRequest) ([]*datastruct.Contest, error)
+	FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeInterval) ([]*datastruct.Contest, error)
 	GetById(ctx context.Context, id int) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error

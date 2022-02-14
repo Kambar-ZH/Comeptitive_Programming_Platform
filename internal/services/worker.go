@@ -7,7 +7,7 @@ import (
 	"site/internal/tools"
 )
 
-func RunTestCase(testCase datastruct.TestCase, userSolutionFilePath, authorSolutionFilePath string) (dto.Verdict, error) {
+func RunTestCase(testCase *datastruct.TestCase, userSolutionFilePath, authorSolutionFilePath string) (dto.Verdict, error) {
 	expected, err := tools.MustExecuteFile(authorSolutionFilePath, testCase)
 	if err != nil {
 		logger.Logger.Error("error on executing author solution")

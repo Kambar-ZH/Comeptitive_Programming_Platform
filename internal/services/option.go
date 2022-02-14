@@ -14,6 +14,7 @@ type AuthServiceOption func(a *AuthServiceImpl)
 type ContestServiceOption func(c *ContestServiceImpl)
 type ProblemServiceOption func(p *ProblemServiceImpl)
 type ParticipantServiceOption func(p *ParticipantServiceImpl)
+type UserFriendServiceOption func(u *UserFriendServiceImpl)
 
 func UserServiceWithStore(store store.Store) UserServiceOption {
 	return func(u *UserServiceImpl) {
@@ -66,5 +67,11 @@ func ProblemServiceWithStore(store store.Store) ProblemServiceOption {
 func ParticipantServiceWithStore(store store.Store) ParticipantServiceOption {
 	return func(p *ParticipantServiceImpl) {
 		p.store = store
+	}
+}
+
+func UserFriendsServiceWithStore(store store.Store) UserFriendServiceOption {
+	return func(u *UserFriendServiceImpl) {
+		u.store = store
 	}
 }

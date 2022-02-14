@@ -2,9 +2,7 @@ package kafka
 
 import (
 	"context"
-	"site/internal/logger"
 	message_broker "site/internal/message_broker"
-	"time"
 
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -31,14 +29,6 @@ func (b *Broker) Connect(ctx context.Context) error {
 			}
 		}
 		return nil
-	}
-
-	start := time.Now()
-	for connect(ctx) != nil {
-		if start.After(start.Add(5 * time.Second)) {
-			logger.Logger.Error("failed connect to kafka after 5 seconds")
-			break
-		}
 	}
 
 	if err := connect(ctx); err != nil {

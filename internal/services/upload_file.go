@@ -50,6 +50,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		return err
 	}
 	if contest.Phase != dto.CODING.String() {
+		logger.Logger.Debug("contest is not in coding phase")
 		return nil
 	}
 	problem, err := u.store.Problems().GetById(ctx, int(submission.ProblemId))
@@ -65,14 +66,13 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		points -= minutePassed / contestDuration * 100
 	}
 
-	problemResults, err := u.store.ProblemResults().GetByProblemId(ctx, &dto.ProblemResultsGetByProblemIdRequest{
+	problemResults, err := u.store.ProblemResults().GetByProblemId(ctx, &dto.ProblemResultGetByProblemIdRequest{
 		ContestId: submission.ContestId,
 		ProblemId: submission.ProblemId,
 		UserId:    submission.UserId,
 	})
 	if err != nil {
-		logger.Logger.Error(err.Error())
-		problemResults = &datastruct.ProblemResults{
+		problemResults = &datastruct.ProblemResult{
 			UserId:                       submission.UserId,
 			ProblemId:                    submission.ProblemId,
 			ContestId:                    submission.ContestId,
@@ -82,6 +82,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		}
 		u.store.ProblemResults().Create(ctx, problemResults)
 	}
+	logger.Logger.Sugar().Debugf("%v", problemResults)
 
 	if submission.Verdict != string(dto.PASSED) {
 		problemResults.Penalty++
@@ -96,7 +97,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 	return nil
 }
 
-func saveInMemory(dir string, file multipart.File, fileName string) (*os.File, error) {
+func (u UploadFileServiceImpl) saveInMemory(dir string, file multipart.File, fileName string) (*os.File, error) {
 	fileExtension := tools.ExtensionRegex.ReplaceAllString(fileName, "")
 	tempFile, err := ioutil.TempFile(dir, fmt.Sprintf("*.%s", fileExtension))
 	if err != nil {
@@ -113,7 +114,7 @@ func saveInMemory(dir string, file multipart.File, fileName string) (*os.File, e
 
 func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error) {
 	// WARN: after saving file, closed
-	file, err := saveInMemory(inmemory.TempSolutions(), req.File, req.FileName)
+	file, err := u.saveInMemory(inmemory.TempSolutions(), req.File, req.FileName)
 	if err != nil {
 		return nil, err
 	}

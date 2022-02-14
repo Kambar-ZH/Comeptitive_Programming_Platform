@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
 	"site/internal/store"
 
 	"github.com/jmoiron/sqlx"
@@ -22,6 +23,42 @@ type ParticipantRepository struct {
 
 func NewParticipantRepository(conn *sqlx.DB) store.ParticipantRepository {
 	return &ParticipantRepository{conn: conn}
+}
+
+func (p ParticipantRepository) ParticipantWithProblemResults(ctx context.Context, participant *datastruct.Participant) (*datastruct.Participant, error) {
+	problemResults := make([]*datastruct.ProblemResult, 0)
+	if err := p.conn.Select(&problemResults,
+		`SELECT *
+			FROM problem_results
+			WHERE contest_id = $1
+			AND user_id = $2`,
+		participant.ContestId, participant.UserId); err != nil {
+		return nil, err
+	}
+	for i := range problemResults {
+		var err error
+		problemResults[i], err = p.ProblemResultsWithSubmissions(ctx, problemResults[i])
+		if err != nil {
+			logger.Logger.Error(err.Error())
+		}
+	}
+	participant.ProblemResults = problemResults
+	return participant, nil
+}
+
+func (p ParticipantRepository) ProblemResultsWithSubmissions(ctx context.Context, problemResult *datastruct.ProblemResult) (*datastruct.ProblemResult, error) {
+	submissions := make([]*datastruct.Submission, 0)
+	if err := p.conn.Select(&submissions,
+		`SELECT * 
+			FROM submissions 
+			WHERE contest_id = $1 
+			AND user_id = $2 
+			AND problem_id = $3`,
+		problemResult.ContestId, problemResult.UserId, problemResult.ProblemId); err != nil {
+		return nil, err
+	}
+	problemResult.Submissions = submissions
+	return problemResult, nil
 }
 
 func (p ParticipantRepository) FindAll(ctx context.Context, req *dto.ParticipantFindAllRequest) ([]*datastruct.Participant, error) {
@@ -49,16 +86,11 @@ func (p ParticipantRepository) FindAll(ctx context.Context, req *dto.Participant
 		return nil, err
 	}
 	for i := range participants {
-		problemResults := make([]datastruct.ProblemResults, 0)
-		if err := p.conn.Select(&problemResults, 
-		`SELECT *
-			FROM problem_results
-			WHERE contest_id = $1
-			AND user_id = $2`,
-		participants[i].ContestId, participants[i].UserId); err != nil {
-			return nil, err
+		var err error
+		participants[i], err = p.ParticipantWithProblemResults(ctx, participants[i])
+		if err != nil {
+			logger.Logger.Error(err.Error())
 		}
-		participants[i].ProblemResults = problemResults
 	}
 	return participants, nil
 }
@@ -92,17 +124,11 @@ func (p ParticipantRepository) FindFriends(ctx context.Context, req *dto.Partici
 		return nil, err
 	}
 	for i := range participants {
-		problemResults := make([]datastruct.ProblemResults, 0)
-		if err := p.conn.Select(&problemResults, 
-		`SELECT *
-			FROM problem_results
-			WHERE contest_id = $1
-			AND user_id = $2`,
-		req.ContestId,
-		participants[i].UserId); err != nil {
-			return nil, err
+		var err error
+		participants[i], err = p.ParticipantWithProblemResults(ctx, participants[i])
+		if err != nil {
+			logger.Logger.Error(err.Error())
 		}
-		participants[i].ProblemResults = problemResults
 	}
 	return participants, nil
 }
@@ -117,16 +143,21 @@ func (p ParticipantRepository) GetByUserId(ctx context.Context, req *dto.Partici
 		req.UserId, req.ContestId); err != nil {
 		return nil, err
 	}
+	var err error
+	participant, err = p.ParticipantWithProblemResults(ctx, participant)
+	if err != nil {
+		return nil, err
+	}
 	return participant, nil
-} 
+}
 
 func (p ParticipantRepository) Create(ctx context.Context, participant *datastruct.Participant) error {
 	_, err := p.conn.Exec(
 		`INSERT INTO 
 			participants (user_id, contest_id, participant_type, room) 
 			VALUES ($1, $2, $3, $4)`,
-			participant.UserId, participant.ContestId, participant.ParticipantType, participant.Room,
-		)
+		participant.UserId, participant.ContestId, participant.ParticipantType, participant.Room,
+	)
 	if err != nil {
 		return err
 	}

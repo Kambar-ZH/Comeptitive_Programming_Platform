@@ -51,6 +51,19 @@ func (uh *UserHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	Respond(w, r, http.StatusOK, users)
 }
 
+func (uh *UserHandler) FindFriends(w http.ResponseWriter, r *http.Request) {
+	req := &dto.UserFindFriendsRequest{
+		Page: r.Context().Value(middleware.CtxKeyPage).(int32),
+	}
+
+	users, err := uh.service.FindFriends(r.Context(), req)
+	if err != nil {
+		Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	Respond(w, r, http.StatusOK, users)
+}
+
 func (uh *UserHandler) GetByHandle(w http.ResponseWriter, r *http.Request) {
 	handle := chi.URLParam(r, "handle")
 

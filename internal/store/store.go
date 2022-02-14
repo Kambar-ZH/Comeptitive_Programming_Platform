@@ -18,10 +18,13 @@ type Store interface {
 	Problems() ProblemRepository
 	Participants() ParticipantRepository
 	ProblemResults() ProblemResultsRepository
+	Tags() TagRepository
+	UserFriends() UserFriendRepository
 }
 
 type UserRepository interface {
 	FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error)
+	FindFriends(ctx context.Context, req *dto.UserFindFriendsRequest) ([]*datastruct.User, error)
 	GetByEmail(ctx context.Context, email string) (*datastruct.User, error)
 	GetByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
@@ -71,7 +74,16 @@ type ParticipantRepository interface {
 }
 
 type ProblemResultsRepository interface {
-	Update(ctx context.Context, problemResults *datastruct.ProblemResults) error
-	GetByProblemId(ctx context.Context, req *dto.ProblemResultsGetByProblemIdRequest) (*datastruct.ProblemResults, error)
-	Create(ctx context.Context, problemResults *datastruct.ProblemResults) error
+	Update(ctx context.Context, problemResults *datastruct.ProblemResult) error
+	GetByProblemId(ctx context.Context, req *dto.ProblemResultGetByProblemIdRequest) (*datastruct.ProblemResult, error)
+	Create(ctx context.Context, problemResults *datastruct.ProblemResult) error
+}
+
+type TagRepository interface {
+	GetByProblemId(ctx context.Context, problemId int) ([]*datastruct.Tag, error)
+}
+
+type UserFriendRepository interface {
+	Create(ctx context.Context, userFriend *datastruct.UserFriend) error
+	Delete(ctx context.Context, userFriend *datastruct.UserFriend) error
 }

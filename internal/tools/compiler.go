@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	ExtensionRegex = regexp.MustCompile(`.*\.`)
+	ExtensionRegex          = regexp.MustCompile(`.*\.`)
+	ErrInvalidFileExtension = errors.New("invalid file extension")
 )
 
-func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) {
+func ExecuteFile(filePath string, testCase *datastruct.TestCase) (string, error) {
 	extension := ExtensionRegex.ReplaceAllString(filePath, "")
-	
+
 	var cmd *exec.Cmd
 
 	switch extension {
@@ -30,18 +31,23 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 		env := fmt.Sprintf("filePath='%s'", filePath)
 		cmd = exec.Command("make", "run_go_file", env)
 
-	case "c++":
+	case "cpp":
 		env := fmt.Sprintf("filePath='%s'", filePath)
 		executablePath := strings.TrimSuffix(filePath, extension) + "out"
-		env2 := fmt.Sprintf("executablePath=%s", executablePath)
+		env2 := fmt.Sprintf("executablePath='%s'", executablePath)
 		cmd = exec.Command("make", "run_cpp_file", env, env2)
+		logger.Logger.Debug("running cpp solution")
+		logger.Logger.Debug(executablePath)
+		logger.Logger.Debug(filePath)
+
 		defer func() {
+			logger.Logger.Debug("removing executable")
 			cmd = exec.Command("make", "rm_cpp_executable", env2)
 			cmd.Dir = inmemory.MakeMe()
 
 			var errorOut bytes.Buffer
 			cmd.Stderr = &errorOut
-			
+
 			if err := cmd.Run(); err != nil {
 				logger.Logger.Error(errorOut.String())
 			}
@@ -50,6 +56,10 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 	case "py":
 		env := fmt.Sprintf("filePath='%s'", filePath)
 		cmd = exec.Command("make", "run_py_file", env)
+	}
+
+	if cmd == nil {
+		return "", ErrInvalidFileExtension
 	}
 
 	cmd.Dir = inmemory.MakeMe()
@@ -99,8 +109,8 @@ func ExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) 
 	return string(result), nil
 }
 
-// Run executable file, if program doesn't halt, finish after 3 seconds
-func MustExecuteFile(filePath string, testCase datastruct.TestCase) (string, error) {
+// MustExecuteFile Run executable file, if program doesn't halt, finish after 3 seconds
+func MustExecuteFile(filePath string, testCase *datastruct.TestCase) (string, error) {
 	type Response struct {
 		verdict string
 		err     error

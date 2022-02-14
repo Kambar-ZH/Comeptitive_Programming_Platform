@@ -19,6 +19,10 @@ type ParticipantServiceImpl struct {
 	store store.Store
 }
 
+var (
+	rooms = 100
+)
+
 func NewParticipantRepository(opts ...ParticipantServiceOption) ParticipantService {
 	svc := &ParticipantServiceImpl{}
 	for _, v := range opts {
@@ -30,7 +34,7 @@ func NewParticipantRepository(opts ...ParticipantServiceOption) ParticipantServi
 func (p ParticipantServiceImpl) FindAll(ctx context.Context, req *dto.ParticipantFindAllRequest) ([]*datastruct.Participant, error) {
 	req.Limit = usersPerPage
 	req.Offset = (req.Page - 1) * usersPerPage
-	
+
 	return p.store.Participants().FindAll(ctx, req)
 }
 
@@ -59,7 +63,7 @@ func (p ParticipantServiceImpl) Register(ctx context.Context, req *dto.Participa
 		UserId:          user.Id,
 		ContestId:       int32(req.ContestId),
 		ParticipantType: req.ParticipantType,
-		Room:            int32(rand.Int()),
+		Room:            int32(rand.Int()%rooms + 1),
 	}
 	return p.store.Participants().Create(ctx, participant)
 }

@@ -13,7 +13,7 @@ type AuthHandlerOption func(s *AuthHandler)
 type ContestHandlerOption func(c *ContestHander)
 type ProblemHandlerOption func(p *ProblemHandler)
 type ParticipantHandlerOption func(p *ParticipantHandler)
-
+type UserFriendHandlerOption func(uf *UserFriendHandler)
 
 func WithUserService(service services.UserService) UserHandlerOption {
 	return func(u *UserHandler) {
@@ -60,5 +60,11 @@ func WithProblemService(service services.ProblemService) ProblemHandlerOption {
 func WithParticipantService(service services.ParticipantService) ParticipantHandlerOption {
 	return func(p *ParticipantHandler) {
 		p.service = service
+	}
+}
+
+func WithUserFriendService(service services.UserFriendsService) UserFriendHandlerOption {
+	return func(uf *UserFriendHandler) {
+		uf.service = service
 	}
 }

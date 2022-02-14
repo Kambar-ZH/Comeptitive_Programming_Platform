@@ -49,6 +49,21 @@ func (u UserRepository) FindAll(ctx context.Context, req *dto.UserFindAllRequest
 	return users, nil
 }
 
+func (u UserRepository) FindFriends(ctx context.Context, req *dto.UserFindFriendsRequest) ([]*datastruct.User, error) {
+	users := make([]*datastruct.User, 0)
+	if err := u.conn.Select(&users,
+		`SELECT users.* 
+			FROM users, user_friends
+			WHERE user_friends.user_id = $1
+			AND users.id = user_friends.friend_id
+			LIMIT $2
+			OFFSET $3`,
+		req.UserId, req.Limit, req.Offset); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (u UserRepository) GetByEmail(ctx context.Context, email string) (*datastruct.User, error) {
 	user := new(datastruct.User)
 	if err := u.conn.Get(user,

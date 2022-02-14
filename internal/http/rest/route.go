@@ -20,6 +20,7 @@ func (s *Server) basicHandler() chi.Router {
 	cs := services.NewContestService(services.ContestServiceWithStore(s.store))
 	ps := services.NewProblemService(services.ProblemServiceWithStore(s.store))
 	ps2 := services.NewParticipantRepository(services.ParticipantServiceWithStore(s.store))
+	ufs2 := services.NewUserFriendService(services.UserFriendsServiceWithStore(s.store))
 
 	uh := handler.NewUserHandler(handler.WithUserService(us))
 	sh := handler.NewSubmissionHandler(handler.WithSubmissionService(ss))
@@ -28,8 +29,23 @@ func (s *Server) basicHandler() chi.Router {
 	ch := handler.NewContestHandler(handler.WithContestService(cs))
 	ph := handler.NewProblemHandler(handler.WithProblemService(ps))
 	ph2 := handler.NewParticipantHandler(handler.WithParticipantService(ps2))
+	ufh2 := handler.NewUserFriendHandler(handler.WithUserFriendService(ufs2))
 
-	s.PrepareUserRoutes(r, uh)
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", uh.Create)
+		r.With(middleware.Paginate).Get("/", uh.FindAll)
+		r.Put("/", uh.Update)
+		r.Route("/{handle}", func(r chi.Router) {
+			r.Get("/", uh.GetByHandle)
+			r.Delete("/", uh.Delete)
+			r.Route("/friends", func(r chi.Router) {
+				r.Use(ah.AuthenticateUser)
+				r.With(middleware.Paginate).Get("/", uh.FindFriends)
+				r.Post("/", ufh2.Create)
+				r.Delete("/", ufh2.Delete)
+			})
+		})
+	})
 
 	r.Route("/profile", func(r chi.Router) {
 		r.Use(ah.AuthenticateUser)
@@ -67,16 +83,6 @@ func (s *Server) PrepareProblemRoutes(r chi.Router, h *handler.ProblemHandler) {
 		r.Get("/{id}", h.GetById)
 		r.Put("/", h.Update)
 		r.Delete("/{id}", h.Delete)
-	})
-}
-
-func (s *Server) PrepareUserRoutes(r chi.Router, h *handler.UserHandler) {
-	r.Route("/users", func(r chi.Router) {
-		r.Post("/", h.Create)
-		r.With(middleware.Paginate).Get("/", h.FindAll)
-		r.Get("/{handle}", h.GetByHandle)
-		r.Put("/", h.Update)
-		r.Delete("/{handle}", h.Delete)
 	})
 }
 

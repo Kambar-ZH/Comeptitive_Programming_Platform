@@ -21,6 +21,8 @@ type DB struct {
 	problems       store.ProblemRepository
 	participants   store.ParticipantRepository
 	problemResults store.ProblemResultsRepository
+	tags           store.TagRepository
+	userFriends    store.UserFriendRepository
 }
 
 func NewDB() store.Store {

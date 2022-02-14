@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
 	"site/internal/store"
 
 	"github.com/jmoiron/sqlx"
@@ -22,6 +23,20 @@ type ProblemRepository struct {
 
 func NewProblemRepository(conn *sqlx.DB) store.ProblemRepository {
 	return &ProblemRepository{conn: conn}
+}
+
+func (p ProblemRepository) ProblemWithTags(ctx context.Context, problem *datastruct.Problem) (*datastruct.Problem, error) {
+	tags := make([]*datastruct.Tag, 0)
+	if err := p.conn.Select(&tags,
+		`SELECT tags.* 
+				FROM tags, problems_tags 
+				WHERE problems_tags.problem_id = $1 
+				AND tags.id = problems_tags.tag_id`,
+		problem.Id); err != nil {
+		return nil, err
+	}
+	problem.Tags = tags
+	return problem, nil
 }
 
 func (p ProblemRepository) Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error) {
@@ -48,16 +63,11 @@ func (p ProblemRepository) Problemset(ctx context.Context, req *dto.ProblemsetRe
 		}
 	}
 	for i := range problems {
-		tags := make([]datastruct.Tag, 0)
-		if err := p.conn.Select(&tags,
-			`SELECT tags.* 
-				FROM tags, problems_tags 
-				WHERE problems_tags.problem_id = $1 
-				AND tags.id = problems_tags.tag_id`,
-			problems[i].Id); err != nil {
-			return nil, err
+		var err error
+		problems[i], err = p.ProblemWithTags(ctx, problems[i])
+		if err != nil {
+			logger.Logger.Error(err.Error())
 		}
-		problems[i].Tags = tags
 	}
 	return problems, nil
 }
@@ -74,16 +84,11 @@ func (p ProblemRepository) FindAll(ctx context.Context, req *dto.ProblemFindAllR
 		return nil, err
 	}
 	for i := range problems {
-		tags := make([]datastruct.Tag, 0)
-		if err := p.conn.Select(&tags,
-			`SELECT tags.* 
-				FROM tags, problems_tags 
-				WHERE problems_tags.problem_id = $1 
-				AND tags.id = problems_tags.tag_id`,
-			problems[i].Id); err != nil {
-			return nil, err
+		var err error
+		problems[i], err = p.ProblemWithTags(ctx, problems[i])
+		if err != nil {
+			logger.Logger.Error(err.Error())
 		}
-		problems[i].Tags = tags
 	}
 	return problems, nil
 }
@@ -97,16 +102,11 @@ func (p ProblemRepository) GetById(ctx context.Context, id int) (*datastruct.Pro
 		id); err != nil {
 		return nil, err
 	}
-	tags := make([]datastruct.Tag, 0)
-	if err := p.conn.Select(&tags,
-		`SELECT tags.* 
-			FROM tags, problems_tags 
-			WHERE problems_tags.problem_id = $1 
-			AND tags.id = problems_tags.tag_id`,
-		id); err != nil {
+	var err error
+	problem, err = p.ProblemWithTags(ctx, problem)
+	if err != nil {
 		return nil, err
 	}
-	problem.Tags = tags
 	return problem, nil
 }
 

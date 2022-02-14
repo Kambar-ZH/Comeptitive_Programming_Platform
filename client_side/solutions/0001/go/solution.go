@@ -7,7 +7,8 @@ import (
 )
 
 var reader *bufio.Reader = bufio.NewReader(os.Stdin)
-func scanf(f string, a ...interface{})  { fmt.Fscanf(reader, f, a...) }
+
+func scanf(f string, a ...interface{}) { fmt.Fscanf(reader, f, a...) }
 
 // Sum on the array problem
 func main() {
@@ -19,7 +20,7 @@ func main() {
 		scanf("%d", &Arr[i])
 	}
 	var sum int
-	for _, x := range(Arr) {
+	for _, x := range Arr {
 		sum += x
 	}
 	fmt.Println(sum)

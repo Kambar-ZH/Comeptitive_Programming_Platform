@@ -14,6 +14,7 @@ const (
 
 type UserService interface {
 	FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error)
+	FindFriends(ctx context.Context, req *dto.UserFindFriendsRequest) ([]*datastruct.User, error)
 	GetByEmail(ctx context.Context, email string) (*datastruct.User, error)
 	GetByHandle(ctx context.Context, handle string) (*datastruct.User, error)
 	Create(ctx context.Context, user *datastruct.User) error
@@ -31,6 +32,18 @@ func NewUserService(opts ...UserServiceOption) UserService {
 		v(svc)
 	}
 	return svc
+}
+
+func (u UserServiceImpl) FindFriends(ctx context.Context, req *dto.UserFindFriendsRequest) ([]*datastruct.User, error) {
+	req.Limit = usersPerPage
+	req.Offset = (req.Page - 1) * usersPerPage
+	user, ok := middleware.UserFromCtx(ctx)
+	if !ok {
+		return nil, middleware.ErrNotAuthenticated
+	}
+	req.UserId = user.Id
+	users, err := u.store.Users().FindFriends(ctx, req)
+	return users, err
 }
 
 func (u UserServiceImpl) FindAll(ctx context.Context, req *dto.UserFindAllRequest) ([]*datastruct.User, error) {

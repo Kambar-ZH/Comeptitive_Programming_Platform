@@ -10,5 +10,5 @@ type Problem struct {
 	Output     string `json:"output,omitempty" db:"output,omitempty"`
 	Difficulty int32  `json:"difficulty,omitempty" db:"difficulty,omitempty"`
 	Points     int32  `json:"points,omitempty" db:"points,omitempty"`
-	Tags       []Tag
+	Tags       []*Tag
 }

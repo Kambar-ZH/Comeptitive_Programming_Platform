@@ -9,7 +9,7 @@ type (
 		Offset    int32
 	}
 
-	ProblemResultsGetByProblemIdRequest struct {
+	ProblemResultGetByProblemIdRequest struct {
 		ContestId int32
 		UserId    int32
 		ProblemId int32

@@ -5,8 +5,8 @@ run_py_file:
 	@python3 $(filePath)
 
 run_cpp_file:
-	@g++ $(filePath) $(executablePath)
-	./a.out
+	@g++ $(filePath) -o $(executablePath)
+	@$(executablePath)
 
 rm_cpp_executable:
 	@rm $(executablePath)

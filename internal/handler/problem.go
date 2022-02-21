@@ -75,6 +75,7 @@ func (ph *ProblemHandler) Problemset(w http.ResponseWriter, r *http.Request) {
 		MinDifficulty: int32(minDifficulty),
 		MaxDifficulty: int32(maxDifficulty),
 		FilterTag:     filterTag,
+		LanguageCode:  middleware.LanguageCodeFromCtx(r.Context()),
 	}
 
 	problems, err := ph.service.Problemset(r.Context(), req)
@@ -95,8 +96,9 @@ func (ph *ProblemHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &dto.ProblemFindAllRequest{
-		Page:      r.Context().Value(middleware.CtxKeyPage).(int32),
-		ContestId: int32(contestId),
+		Page:         r.Context().Value(middleware.CtxKeyPage).(int32),
+		ContestId:    int32(contestId),
+		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
 	}
 
 	problems, err := ph.service.FindAll(r.Context(), req)
@@ -121,8 +123,9 @@ func (ph *ProblemHandler) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	submission, err := ph.service.GetById(r.Context(), &dto.ProblemGetByIdRequest{
-		ProblemId: int32(id),
-		ContestId: int32(contestId),
+		ProblemId:    int32(id),
+		ContestId:    int32(contestId),
+		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
 	})
 	if err != nil {
 		Error(w, r, http.StatusNotFound, err)

@@ -1,31 +1,31 @@
 package services
 
 import (
+	"site/internal/consts"
 	"site/internal/datastruct"
-	"site/internal/dto"
 	"site/internal/logger"
 	"site/internal/tools"
 )
 
-func RunTestCase(testCase *datastruct.TestCase, userSolutionFilePath, authorSolutionFilePath string) (dto.Verdict, error) {
+func RunTestCase(testCase *datastruct.TestCase, userSolutionFilePath, authorSolutionFilePath string) (consts.Verdict, error) {
 	expected, err := tools.MustExecuteFile(authorSolutionFilePath, testCase)
 	if err != nil {
 		logger.Logger.Error("error on executing author solution")
-		return dto.UNKNOWN_ERROR, err
+		return consts.UNKNOWN_ERROR, err
 	}
 	actual, err := tools.MustExecuteFile(userSolutionFilePath, testCase)
 	if err != nil {
 		logger.Logger.Error("error on executing participant solution")
-		return dto.COMPILATION_ERROR, err
+		return consts.COMPILATION_ERROR, err
 	}
 
 	if !check(expected, actual) {
 		logger.Logger.Sugar().Debugf("incorrect result on test [%d]:\nExpected: %s\nActual: %s", testCase.Id, expected, actual)
-		return dto.FAILED, err
+		return consts.FAILED, err
 	}
 
 	logger.Logger.Sugar().Debugf("correct result on test [%d]:\nExpected: %s\nActual: %s", testCase.Id, expected, actual)
-	return dto.PASSED, err
+	return consts.PASSED, err
 }
 
 func check(expected, actual string) bool {

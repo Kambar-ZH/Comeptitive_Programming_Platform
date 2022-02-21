@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"os"
+	"site/internal/consts"
 	"site/internal/datastruct"
 	"site/internal/dto"
 	"site/internal/logger"
@@ -45,15 +46,21 @@ func (u UploadFileServiceImpl) Create(ctx context.Context, submission *datastruc
 }
 
 func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *datastruct.Submission) error {
-	contest, err := u.store.Contests().GetById(ctx, int(submission.ContestId))
+	contest, err := u.store.Contests().GetById(ctx, &dto.ContestGetByIdRequest{
+		ContestId:    submission.ContestId,
+		LanguageCode: consts.EN,
+	})
 	if err != nil {
 		return err
 	}
-	if contest.Phase != dto.CODING.String() {
+	if contest.Phase != consts.CODING.String() {
 		logger.Logger.Debug("contest is not in coding phase")
 		return nil
 	}
-	problem, err := u.store.Problems().GetById(ctx, int(submission.ProblemId))
+	problem, err := u.store.Problems().GetById(ctx, &dto.ProblemGetByIdRequest{
+		ProblemId:    submission.ProblemId,
+		LanguageCode: consts.EN,
+	})
 	if err != nil {
 		return err
 	}
@@ -63,7 +70,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 	contestDuration := int32(contest.EndDate.Sub(contest.StartDate) / time.Minute)
 
 	if contestDuration != 0 {
-		points -= minutePassed / contestDuration * 100
+		points -= minutePassed / contestDuration * points * 50
 	}
 
 	problemResults, err := u.store.ProblemResults().GetByProblemId(ctx, &dto.ProblemResultGetByProblemIdRequest{
@@ -84,9 +91,8 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 	}
 	logger.Logger.Sugar().Debugf("%v", problemResults)
 
-	if submission.Verdict != string(dto.PASSED) {
+	if submission.Verdict != string(consts.PASSED) {
 		problemResults.Penalty++
-		problemResults.Points -= 50
 	}
 
 	if err = u.store.ProblemResults().Update(ctx, problemResults); err != nil {
@@ -142,7 +148,7 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
 	validator, err := u.store.Validators().GetByProblemId(ctx, req.ProblemId)
 	if err != nil {
-		return &dto.RunTestCasesResponse{Verdict: dto.UNKNOWN_ERROR}, err
+		return &dto.RunTestCasesResponse{Verdict: consts.UNKNOWN_ERROR}, err
 	}
 
 	for _, testCase := range validator.TestCases {
@@ -150,12 +156,12 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTes
 		if err != nil {
 			return nil, err
 		}
-		if verdict != dto.PASSED {
+		if verdict != consts.PASSED {
 			return &dto.RunTestCasesResponse{
 				Verdict:    verdict,
 				FailedTest: testCase.Id,
 			}, nil
 		}
 	}
-	return &dto.RunTestCasesResponse{Verdict: dto.PASSED}, nil
+	return &dto.RunTestCasesResponse{Verdict: consts.PASSED}, nil
 }

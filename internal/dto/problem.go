@@ -1,27 +1,33 @@
 package dto
 
-import "site/internal/datastruct"
+import (
+	"site/internal/consts"
+	"site/internal/datastruct"
+)
 
 type (
 	ProblemFindAllRequest struct {
-		Page      int32
-		Limit     int32
-		Offset    int32
-		ContestId int32
+		Page         int32
+		Limit        int32
+		Offset       int32
+		LanguageCode consts.LanguageCode
+		ContestId    int32
 	}
 
 	ProblemsetRequest struct {
 		Page          int32
 		Limit         int32
 		Offset        int32
+		LanguageCode  consts.LanguageCode
 		MinDifficulty int32
 		MaxDifficulty int32
 		FilterTag     string
 	}
 
 	ProblemGetByIdRequest struct {
-		ContestId int32
-		ProblemId int32
+		ProblemId    int32
+		ContestId    int32
+		LanguageCode consts.LanguageCode
 	}
 
 	ProblemUpdateRequest struct {

@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"site/internal/consts"
 	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/services"
@@ -24,17 +26,52 @@ func NewAuthHandler(opts ...AuthHandlerOption) *AuthHandler {
 	return ah
 }
 
+func (a AuthHandler) UpdateLocale() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &struct {
+			LanguageCode int `json:"language_code"`
+		}{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			Error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		session, err := a.sessionStore.Get(r, middleware.SessionName)
+		if err != nil {
+			Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		session.Values["language_code"] = req.LanguageCode
+		fmt.Println(req.LanguageCode)
+		if err := a.sessionStore.Save(r, w, session); err != nil {
+			Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		Respond(w, r, http.StatusOK, nil)
+	}
+}
+
+func (a AuthHandler) VerifyLocale(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := a.sessionStore.Get(r, middleware.SessionName)
+		if err != nil {
+			Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		languageCode, ok := session.Values["language_code"]
+		if !ok {
+			languageCode = consts.EN
+		}
+
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), middleware.CtxKeyLanguageCode, languageCode)))
+	})
+}
+
 func (a AuthHandler) CreateSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		/*
-			// URLPARAMS
-			req := &dto.Cridentials{
-				Email: chi.URLParam(r, "email"),
-				Password: chi.URLParam(r, "password"),
-			}
-		*/
-
-		// JSON
 		req := &dto.Cridentials{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			Error(w, r, http.StatusBadRequest, err)

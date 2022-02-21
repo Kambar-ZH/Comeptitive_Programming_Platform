@@ -31,6 +31,12 @@ func (s *Server) basicHandler() chi.Router {
 	ph2 := handler.NewParticipantHandler(handler.WithParticipantService(ps2))
 	ufh2 := handler.NewUserFriendHandler(handler.WithUserFriendService(ufs2))
 
+	r.Use(ah.VerifyLocale)
+
+	r.Route("/locale", func(r chi.Router) {
+		r.Post("/", ah.UpdateLocale())
+	})
+
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", uh.Create)
 		r.With(middleware.Paginate).Get("/", uh.FindAll)

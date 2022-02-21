@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"site/internal/datastruct"
 	"site/internal/dto"
@@ -23,72 +24,125 @@ func NewContestsRepository(conn *sqlx.DB) store.ContestRepository {
 	return &ContestRepository{conn: conn}
 }
 
-func (c ContestRepository) FindAll(ctx context.Context, query *dto.ContestFindAllRequest) ([]*datastruct.Contest, error) {
+func (c ContestRepository) FindAll(ctx context.Context, req *dto.ContestFindAllRequest) ([]*datastruct.Contest, error) {
 	contests := make([]*datastruct.Contest, 0)
 	if err := c.conn.Select(&contests,
-		`SELECT * 
-			FROM contests 
-			ORDER BY start_date DESC
-			OFFSET $1 
-			LIMIT $2`,
-		query.Offset, query.Limit); err != nil {
+		`SELECT 
+		c.id "id",
+       	c.start_date "start_date",
+       	c.end_date "end_date",
+       	c.phase "phase",
+       	ct.name "name",
+       	ct.description "description"
+		FROM contests c
+			JOIN contest_translation ct on c.id = ct.contest_id
+		WHERE ct.language_code = $1
+		ORDER BY start_date DESC
+		OFFSET $2 
+		LIMIT $3`,
+		req.LanguageCode.String(), req.Offset, req.Limit); err != nil {
 		return nil, err
 	}
 	return contests, nil
 }
 
-func (c ContestRepository) FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeInterval) ([]*datastruct.Contest, error) {
+func (c ContestRepository) FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeIntervalRequest) ([]*datastruct.Contest, error) {
 	contests := make([]*datastruct.Contest, 0)
 	if err := c.conn.Select(&contests,
-		`SELECT * 
-			FROM contests 
-			WHERE start_date 
-			    BETWEEN $1 AND $2`,
-		req.StartTime, req.EndTime); err != nil {
+		`SELECT 
+		c.id "id",
+       	c.start_date "start_date",
+       	c.end_date "end_date",
+       	c.phase "phase",
+       	ct.name "name",
+       	ct.description "description"
+		FROM contests c
+			JOIN contest_translation ct on c.id = ct.contest_id
+		WHERE start_date BETWEEN $1 AND $2
+			AND ct.language_code = $3`,
+		req.StartTime, req.EndTime, req.LanguageCode.String()); err != nil {
 		return nil, err
 	}
 	return contests, nil
 }
 
-func (c ContestRepository) GetById(ctx context.Context, id int) (*datastruct.Contest, error) {
+func (c ContestRepository) GetById(ctx context.Context, req *dto.ContestGetByIdRequest) (*datastruct.Contest, error) {
 	contest := new(datastruct.Contest)
 	if err := c.conn.Get(contest,
-		`SELECT * 
-			FROM contests 
-			WHERE id = $1`,
-		id); err != nil {
+		`SELECT 
+		c.id "id",
+       	c.start_date "start_date",
+       	c.end_date "end_date",
+       	c.phase "phase",
+       	ct.name "name",
+       	ct.description "description"
+		FROM contests c
+			JOIN contest_translation ct on c.id = ct.contest_id
+		WHERE id = $1
+			AND ct.language_code = $2`,
+		req.ContestId, req.LanguageCode.String()); err != nil {
 		return nil, err
 	}
 	return contest, nil
 }
 
 func (c ContestRepository) Create(ctx context.Context, contest *datastruct.Contest) error {
-	_, err := c.conn.Exec(
+	tx, err := c.conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	_, err = tx.Exec(
 		`INSERT INTO 
-			contests (name, start_date, end_date, description) 
-			VALUES ($1, $2, $3, $4)`,
-		contest.Name, contest.StartDate, contest.EndDate, contest.Description)
+			contests (start_date, end_date) 
+			VALUES ($1, $2)`,
+		contest.StartDate, contest.EndDate)
 	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(
+		`INSERT INTO 
+			contest_translation (contest_id, name, description) 
+			VALUES (lastval(), $1, $2)`,
+		contest.Name, contest.Description)
+	if err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c ContestRepository) Update(ctx context.Context, contest *datastruct.Contest) error {
-	_, err := c.conn.Exec(
+	tx, err := c.conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	_, err = tx.Exec(
 		`UPDATE contests 
-			SET name = $1, start_date = $2, end_date = $3, description = $4 
-			WHERE id = $5`,
-		contest.Name, contest.StartDate, contest.EndDate, contest.Description, contest.Id)
+			SET start_date = $1, end_date = $2 
+			WHERE id = $3`,
+		contest.StartDate, contest.EndDate, contest.Id)
+	_, err = tx.Exec(
+		`UPDATE contest_translation 
+			SET name = $1, description = $2 
+			WHERE contest_id = $3`,
+		contest.Name, contest.Description, contest.Id)
 	if err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c ContestRepository) Delete(ctx context.Context, id int) error {
-	_, err := c.conn.Exec("DELETE FROM contests WHERE id = $1", id)
+	tx, err := c.conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	_, err = tx.Exec(
+		`DELETE FROM contests 
+			WHERE id = $1`, id)
+	_, err = tx.Exec(
+		`DELETE FROM contest_translation 
+			WHERE contest_id = $1`, id)
 	if err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 	return nil

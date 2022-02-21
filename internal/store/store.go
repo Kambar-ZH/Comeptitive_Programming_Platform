@@ -50,8 +50,8 @@ type TestCaseRepository interface {
 
 type ContestRepository interface {
 	FindAll(ctx context.Context, req *dto.ContestFindAllRequest) ([]*datastruct.Contest, error)
-	FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeInterval) ([]*datastruct.Contest, error)
-	GetById(ctx context.Context, id int) (*datastruct.Contest, error)
+	FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeIntervalRequest) ([]*datastruct.Contest, error)
+	GetById(ctx context.Context, req *dto.ContestGetByIdRequest) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error
 	Delete(ctx context.Context, id int) error
@@ -60,7 +60,7 @@ type ContestRepository interface {
 type ProblemRepository interface {
 	Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error)
 	FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error)
-	GetById(ctx context.Context, id int) (*datastruct.Problem, error)
+	GetById(ctx context.Context, req *dto.ProblemGetByIdRequest) (*datastruct.Problem, error)
 	Create(ctx context.Context, problem *datastruct.Problem) error
 	Update(ctx context.Context, problem *datastruct.Problem) error
 	Delete(ctx context.Context, id int) error

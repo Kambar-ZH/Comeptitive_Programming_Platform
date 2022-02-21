@@ -38,7 +38,7 @@ func main() {
 	}
 	for {
 		time.Sleep(5 * time.Second)
-		contests, err := db.Contests().FindByTimeInterval(context.Background(), &dto.ContestFindByTimeInterval{
+		contests, err := db.Contests().FindByTimeInterval(context.Background(), &dto.ContestFindByTimeIntervalRequest{
 			StartTime: time.Now(),
 			EndTime:   endOfDay,
 		})

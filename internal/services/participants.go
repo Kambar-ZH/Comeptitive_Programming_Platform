@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"math/rand"
+	"site/internal/consts"
 	"site/internal/datastruct"
 	"site/internal/dto"
 	"site/internal/middleware"
@@ -53,7 +54,7 @@ func (p ParticipantServiceImpl) FindFriends(ctx context.Context, req *dto.Partic
 
 func (p ParticipantServiceImpl) Register(ctx context.Context, req *dto.ParticipantRegisterRequest) error {
 	if req.ParticipantType == "" {
-		req.ParticipantType = dto.CONTESTANT.String()
+		req.ParticipantType = consts.CONTESTANT.String()
 	}
 	user, ok := middleware.UserFromCtx(ctx)
 	if !ok {

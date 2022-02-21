@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"site/internal/consts"
 	"site/internal/datastruct"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -22,6 +23,14 @@ var (
 func UserFromCtx(ctx context.Context) (*datastruct.User, bool) {
 	user, ok := ctx.Value(CtxKeyUser).(*datastruct.User)
 	return user, ok
+}
+
+func LanguageCodeFromCtx(ctx context.Context) consts.LanguageCode {
+	languageCode, ok := ctx.Value(CtxKeyLanguageCode).(int)
+	if !ok {
+		return consts.EN
+	}
+	return consts.LanguageCode(languageCode)
 }
 
 func RequiredIf(required bool) validation.RuleFunc {

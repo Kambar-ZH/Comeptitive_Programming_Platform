@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"site/internal/consts"
 	"site/internal/datastruct"
 	"site/internal/dto"
 	"site/internal/store"
@@ -40,23 +41,50 @@ func NewProblemService(opts ...ProblemServiceOption) ProblemService {
 func (p ProblemServiceImpl) Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error) {
 	req.Limit = problemsPerPage
 	req.Offset = (req.Page - 1) * problemsPerPage
-	return p.store.Problems().Problemset(ctx, req)
+	problemset, err := p.store.Problems().Problemset(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for i := range problemset {
+		tags, err := p.store.Tags().GetByProblemId(ctx, int(problemset[i].Id))
+		if err != nil {
+			return nil, err
+		}
+		problemset[i].Tags = tags
+	}
+	return problemset, nil
 }
 
 func (p ProblemServiceImpl) FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error) {
 	req.Limit = problemsPerPage
 	req.Offset = (req.Page - 1) * problemsPerPage
-	return p.store.Problems().FindAll(ctx, req)
+	problems, err := p.store.Problems().FindAll(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for i := range problems {
+		tags, err := p.store.Tags().GetByProblemId(ctx, int(problems[i].Id))
+		if err != nil {
+			return nil, err
+		}
+		problems[i].Tags = tags
+	}
+	return problems, nil
 }
 
 func (p ProblemServiceImpl) GetById(ctx context.Context, req *dto.ProblemGetByIdRequest) (*datastruct.Problem, error) {
-	problem, err := p.store.Problems().GetById(ctx, int(req.ProblemId))
+	problem, err := p.store.Problems().GetById(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if problem.ContestId != req.ContestId {
 		return nil, errProblemNotFound
 	}
+	tags, err := p.store.Tags().GetByProblemId(ctx, int(problem.Id))
+	if err != nil {
+		return nil, err
+	}
+	problem.Tags = tags
 	return problem, nil
 }
 
@@ -67,7 +95,10 @@ func (p ProblemServiceImpl) Create(ctx context.Context, req *dto.ProblemCreateRe
 
 func (p ProblemServiceImpl) Update(ctx context.Context, req *dto.ProblemUpdateRequest) error {
 	// TODO: add admin permission
-	problem, err := p.store.Problems().GetById(ctx, int(req.Problem.Id))
+	problem, err := p.store.Problems().GetById(ctx, &dto.ProblemGetByIdRequest{
+		ProblemId: req.Problem.Id,
+		ContestId: req.ContestId,
+	})
 	if err != nil {
 		return err
 	}
@@ -79,7 +110,11 @@ func (p ProblemServiceImpl) Update(ctx context.Context, req *dto.ProblemUpdateRe
 
 func (p ProblemServiceImpl) Delete(ctx context.Context, req *dto.ProblemDeleteRequest) error {
 	// TODO: add admin permission
-	problem, err := p.store.Problems().GetById(ctx, int(req.ProblemId))
+	problem, err := p.store.Problems().GetById(ctx, &dto.ProblemGetByIdRequest{
+		ProblemId:    req.ProblemId,
+		ContestId:    req.ContestId,
+		LanguageCode: consts.EN,
+	})
 	if err != nil {
 		return err
 	}

@@ -39,8 +39,9 @@ func (ch *ContestHander) Create(w http.ResponseWriter, r *http.Request) {
 
 func (ch *ContestHander) FindAll(w http.ResponseWriter, r *http.Request) {
 	req := &dto.ContestFindAllRequest{
-		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		Page:         r.Context().Value(middleware.CtxKeyPage).(int32),
+		Filter:       r.Context().Value(middleware.CtxKeyFilter).(string),
+		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
 	}
 
 	contests, err := ch.service.FindAll(r.Context(), req)
@@ -59,7 +60,10 @@ func (ch *ContestHander) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contest, err := ch.service.GetById(r.Context(), id)
+	contest, err := ch.service.GetById(r.Context(), &dto.ContestGetByIdRequest{
+		ContestId:    int32(id),
+		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
+	})
 	if err != nil {
 		Error(w, r, http.StatusInternalServerError, err)
 		return

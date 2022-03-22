@@ -1,0 +1,10 @@
+Mar 03, 2022  21:08:29	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:23	FATAL: database "codeforces" does not exist (SQLSTATE 3D000)
+Mar 03, 2022  21:10:24	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:23	FATAL: database "codeforces" does not exist (SQLSTATE 3D000)
+Mar 03, 2022  21:11:46	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:23	dial tcp: lookup postgres: Temporary failure in name resolution
+Mar 03, 2022  21:11:59	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:23	FATAL: database "codeforces" does not exist (SQLSTATE 3D000)
+Mar 03, 2022  21:14:57	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:23	FATAL: database "codeforces" does not exist (SQLSTATE 3D000)
+Mar 03, 2022  21:17:54	[DEBUG]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/internal/http/rest/server.go:48	serving on :8080
+Mar 03, 2022  21:18:09	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/internal/handler/response.go:10	ERROR: relation "contests" does not exist (SQLSTATE 42P01)
+Mar 03, 2022  21:25:10	[WARNING]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:40	caught termination signal
+Mar 03, 2022  21:25:10	[ERROR]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/cmd/myapp/main.go:66	http: Server closed
+Mar 03, 2022  21:25:10	[DEBUG]	/home/kambar/Desktop/visual_studio/golang/Comeptitive_Programming_Platform/internal/http/rest/server.go:60	proccessed all idle connections

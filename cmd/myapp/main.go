@@ -32,7 +32,7 @@ func main() {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	сatchTerminationfunc := func(cancel context.CancelFunc) {
+	catchTerminationFunc := func(cancel context.CancelFunc) {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 		<-stop
@@ -41,7 +41,7 @@ func main() {
 		cancel()
 	}
 
-	go сatchTerminationfunc(cancel)
+	go catchTerminationFunc(cancel)
 
 	sessionStore := sessions.NewCookieStore([]byte("secret"))
 

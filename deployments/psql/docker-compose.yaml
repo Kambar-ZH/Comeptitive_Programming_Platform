@@ -1,0 +1,10 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adminadmin
+      POSTGRES_DATABASE: codeforces
+    ports:
+      - "54320:5432"

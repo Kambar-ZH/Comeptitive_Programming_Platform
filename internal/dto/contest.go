@@ -6,10 +6,7 @@ import (
 )
 
 type ContestFindAllRequest struct {
-	Filter       string
-	Page         int32
-	Limit        int32
-	Offset       int32
+	Pagination
 	LanguageCode consts.LanguageCode
 }
 

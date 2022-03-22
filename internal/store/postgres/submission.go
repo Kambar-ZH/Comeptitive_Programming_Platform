@@ -4,6 +4,7 @@ import (
 	"context"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
 	"site/internal/store"
 
 	"github.com/jmoiron/sqlx"
@@ -26,7 +27,7 @@ func NewSubmissionRepository(conn *sqlx.DB) store.SubmissionRepository {
 
 func (s SubmissionRepository) FindAll(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error) {
 	submissions := make([]*datastruct.Submission, 0)
-	if req.FilterUserHandle != "" {
+	if req.Filter != "" {
 		if err := s.conn.Select(&submissions,
 			`SELECT submissions.* 
 				FROM users, submissions 
@@ -35,7 +36,7 @@ func (s SubmissionRepository) FindAll(ctx context.Context, req *dto.SubmissionFi
 					AND contest_id = $2 
 				OFFSET $3 
 				LIMIT $4`,
-			"%"+req.FilterUserHandle+"%", req.ContestId, req.Offset, req.Limit); err != nil {
+			"%"+req.Filter+"%", req.ContestId, req.Offset, req.Limit); err != nil {
 			return nil, err
 		}
 		return submissions, nil
@@ -67,10 +68,11 @@ func (s SubmissionRepository) GetById(ctx context.Context, id int) (*datastruct.
 func (s SubmissionRepository) Create(ctx context.Context, submission *datastruct.Submission) error {
 	// TODO: Date conversion
 	_, err := s.conn.Exec(
-		`INSERT INTO submissions(contest_id, problem_id, user_id, verdict, failed_test) 
-			VALUES ($1, $2, $3, $4, $5)`,
-		submission.ContestId, submission.ProblemId, submission.UserId, submission.Verdict, submission.FailedTest)
+		`INSERT INTO submissions(contest_id, problem_id, user_id, verdict, failed_test, solution_file_path) 
+			VALUES ($1, $2, $3, $4, $5, $6)`,
+		submission.ContestId, submission.ProblemId, submission.UserId, submission.Verdict, submission.FailedTest, submission.SolutionFilePath)
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return err
 	}
 	return nil

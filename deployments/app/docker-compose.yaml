@@ -8,4 +8,4 @@ services:
       PEER: peer1
       PORT: :8081
     ports: 
-      - 8081:8081
+      - "8081:8081"

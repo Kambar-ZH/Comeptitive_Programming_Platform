@@ -4,11 +4,8 @@ import "site/internal/datastruct"
 
 type (
 	SubmissionFindAllRequest struct {
-		FilterUserHandle string
-		Page             int32
-		Limit            int32
-		Offset           int32
-		ContestId        int32
+		ContestId int32
+		Pagination
 	}
 
 	SubmissionCreateRequest struct {

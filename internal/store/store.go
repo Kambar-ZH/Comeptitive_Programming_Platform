@@ -69,8 +69,9 @@ type ProblemRepository interface {
 type ParticipantRepository interface {
 	FindAll(ctx context.Context, req *dto.ParticipantFindAllRequest) ([]*datastruct.Participant, error)
 	FindFriends(ctx context.Context, req *dto.ParticipantFindFriendsRequest) ([]*datastruct.Participant, error)
-	GetByUserId(ctx context.Context, req *dto.ParticipantGetByUserIdRequest) (*datastruct.Participant, error)
 	Create(ctx context.Context, participant *datastruct.Participant) error
+	GetById(ctx context.Context, req *dto.ParticipantGetByIdRequest) (*datastruct.Participant, error)
+	Update(ctx context.Context, participant *datastruct.Participant) error
 }
 
 type ProblemResultsRepository interface {

@@ -10,8 +10,8 @@ type (
 	UploadFileRequest struct {
 		File      multipart.File
 		FileName  string
-		ProblemId int
-		ContestId int
+		ProblemId int32
+		ContestId int32
 	}
 	UploadFileResponse struct {
 		Submission *datastruct.Submission
@@ -19,7 +19,7 @@ type (
 	}
 	RunTestCasesRequest struct {
 		ParticipantSolutionFilePath string
-		ProblemId                   int
+		ProblemId                   int32
 	}
 	RunTestCasesResponse struct {
 		Verdict    consts.Verdict

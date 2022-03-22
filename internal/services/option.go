@@ -58,6 +58,12 @@ func ContestServiceWithStore(store store.Store) ContestServiceOption {
 	}
 }
 
+func ContestServiceWithBroker(broker messagebroker.MessageBroker) ContestServiceOption {
+	return func(c *ContestServiceImpl) {
+		c.broker = broker
+	}
+}
+
 func ProblemServiceWithStore(store store.Store) ProblemServiceOption {
 	return func(p *ProblemServiceImpl) {
 		p.store = store

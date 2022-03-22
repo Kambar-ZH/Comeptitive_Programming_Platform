@@ -25,7 +25,7 @@ func RunTestCase(testCase *datastruct.TestCase, userSolutionFilePath, authorSolu
 	}
 
 	logger.Logger.Sugar().Debugf("correct result on test [%d]:\nExpected: %s\nActual: %s", testCase.Id, expected, actual)
-	return consts.PASSED, err
+	return consts.PRETESTS_PASSED, err
 }
 
 func check(expected, actual string) bool {

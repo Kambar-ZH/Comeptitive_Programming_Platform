@@ -44,8 +44,8 @@ func NewSubmissionService(opts ...SubmissionServiceOption) SubmissionService {
 }
 
 func (s SubmissionServiceImpl) All(ctx context.Context, req *dto.SubmissionFindAllRequest) ([]*datastruct.Submission, error) {
-	if req.FilterUserHandle != "" {
-		if value, ok := s.cache.Get(req.FilterUserHandle); ok {
+	if req.Filter != "" {
+		if value, ok := s.cache.Get(req.Filter); ok {
 			if submissions, ok := value.([]*datastruct.Submission); ok {
 				logger.Logger.Sugar().Debugf("cache returned", submissions)
 				return submissions, nil
@@ -55,9 +55,9 @@ func (s SubmissionServiceImpl) All(ctx context.Context, req *dto.SubmissionFindA
 	req.Limit = submissionsPerPage
 	req.Offset = (req.Page - 1) * submissionsPerPage
 	submissions, err := s.store.Submissions().FindAll(ctx, req)
-	if req.FilterUserHandle != "" {
+	if req.Filter != "" {
 		logger.Logger.Sugar().Debugf("query cached", submissions)
-		s.cache.Add(req.FilterUserHandle, submissions)
+		s.cache.Add(req.Filter, submissions)
 	}
 	return submissions, err
 }

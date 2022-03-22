@@ -13,11 +13,11 @@ func DSN() string {
 }
 
 func KafkaConn() string {
-	kafka_conn := os.Getenv("KAFKA_CONN")
-	if kafka_conn == "" {
-		kafka_conn = "localhost:29092"
+	kafkaConn := os.Getenv("KAFKA_CONN")
+	if kafkaConn == "" {
+		kafkaConn = "localhost:29092"
 	}
-	return kafka_conn
+	return kafkaConn
 }
 
 func PeerName() string {

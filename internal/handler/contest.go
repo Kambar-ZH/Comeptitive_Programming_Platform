@@ -3,11 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"site/internal/consts"
 	"site/internal/datastruct"
 	"site/internal/dto"
 	"site/internal/middleware"
 	"site/internal/services"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 )
@@ -39,8 +41,10 @@ func (ch *ContestHander) Create(w http.ResponseWriter, r *http.Request) {
 
 func (ch *ContestHander) FindAll(w http.ResponseWriter, r *http.Request) {
 	req := &dto.ContestFindAllRequest{
-		Page:         r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter:       r.Context().Value(middleware.CtxKeyFilter).(string),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
 	}
 
@@ -49,6 +53,31 @@ func (ch *ContestHander) FindAll(w http.ResponseWriter, r *http.Request) {
 		Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
+	Respond(w, r, http.StatusOK, contests)
+}
+
+func (ch *ContestHander) FindByTimeInterval(w http.ResponseWriter, r *http.Request) {
+	timeFromStr := r.URL.Query().Get("time_from")
+	timeToStr := r.URL.Query().Get("time_to")
+
+	timeFrom, err := time.Parse(time.RFC3339, timeFromStr)
+	if err != nil {
+		Error(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	timeTo, err := time.Parse(time.RFC3339, timeToStr)
+	if err != nil {
+		Error(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	contests, err := ch.service.FindByTimeInterval(r.Context(), &dto.ContestFindByTimeIntervalRequest{
+		StartTime:    timeFrom,
+		EndTime:      timeTo,
+		LanguageCode: consts.EN,
+	})
+
 	Respond(w, r, http.StatusOK, contests)
 }
 

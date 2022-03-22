@@ -3,7 +3,8 @@ package consts
 type Verdict int
 
 const (
-	PASSED Verdict = iota
+	PRETESTS_PASSED Verdict = iota
+	SYSTEM_TESTS_PASSED
 	FAILED
 	COMPILATION_ERROR
 	TIME_LIMIT_ERROR
@@ -11,5 +12,5 @@ const (
 )
 
 func (v Verdict) String() string {
-	return [...]string{"Passed", "Failed Test", "Compilation Error", "Time Limit Error", "Unknown Error"}[v]
+	return [...]string{"Pretests Passed", "System Tests Passed", "Failed Test", "Compilation Error", "Time Limit Error", "Unknown Error"}[v]
 }

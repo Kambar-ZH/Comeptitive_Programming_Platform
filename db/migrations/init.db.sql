@@ -1,3 +1,5 @@
+CREATE DATABASE codeforces;
+
 CREATE TABLE contests
 (
     id         BIGSERIAL PRIMARY KEY,
@@ -75,13 +77,14 @@ CREATE TABLE users
 
 CREATE TABLE submissions
 (
-    id              BIGSERIAL PRIMARY KEY,
-    contest_id      INTEGER      NOT NULL,
-    user_id         INTEGER      NOT NULL,
-    submission_time TIMESTAMP DEFAULT NOW(),
-    problem_id      INTEGER      NOT NULL,
-    verdict         VARCHAR(255) NOT NULL,
-    failed_test     INTEGER   DEFAULT 0,
+    id                 BIGSERIAL PRIMARY KEY,
+    contest_id         INTEGER      NOT NULL,
+    user_id            INTEGER      NOT NULL,
+    submission_time    TIMESTAMP DEFAULT NOW(),
+    problem_id         INTEGER      NOT NULL,
+    verdict            VARCHAR(255) NOT NULL,
+    solution_file_path VARCHAR(255) NOT NULL,
+    failed_test        INTEGER   DEFAULT 0,
     CONSTRAINT fk_users
         FOREIGN KEY (user_id)
             REFERENCES users (id),
@@ -118,6 +121,7 @@ CREATE TABLE participants
     user_id          INTEGER,
     contest_id       INTEGER,
     participant_type VARCHAR(255),
+    points           INTEGER,
     room             INTEGER,
     PRIMARY KEY (user_id, contest_id),
     FOREIGN KEY (contest_id)
@@ -166,9 +170,10 @@ VALUES (1, 'EN', 'Codeforces Round 755 Div3', 'Interesting statements with inter
 
 INSERT INTO problems (contest_id,
                       index,
-                      difficulty)
-VALUES (1, 'A', 600),
-       (1, 'B', 800);
+                      difficulty,
+                      points)
+VALUES (1, 'A', 600, 1000),
+       (1, 'B', 800, 1200);
 
 INSERT INTO problem_translation (problem_id,
                                  language_code,
@@ -205,3 +210,8 @@ INSERT INTO validators (problem_id,
                         solution_file)
 VALUES (1, 'test/problems/0001/solution.go'),
        (2, 'test/problems/0002/solution.go');
+
+select *
+from contest_translation;
+
+SELECT * FROM contests;

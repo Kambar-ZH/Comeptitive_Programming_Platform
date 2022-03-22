@@ -100,10 +100,10 @@ func (u UserRepository) Create(ctx context.Context, user *datastruct.User) error
 }
 
 func (u UserRepository) Update(ctx context.Context, user *datastruct.User) error {
-	_, err := u.conn.Exec(
-		`UPDATE users 
+	_, err := u.conn.Exec(`
+		UPDATE users 
 			SET handle = $1, email = $2, country = $3, city = $4, encrypted_password = $5 
-			WHERE handle = $1`,
+		WHERE handle = $1`,
 		user.Handle, user.Email, user.Country, user.City, user.EncryptedPassword)
 	if err != nil {
 		return err

@@ -1,28 +1,28 @@
 package dto
 
 type ParticipantFindAllRequest struct {
-	ContestId int
-	Filter    string
-	Page      int32
-	Limit     int32
-	Offset    int32
+	ContestId int32
+	Pagination
 }
 
 type ParticipantFindFriendsRequest struct {
-	ContestId int
-	UserId    int
-	Filter    string
-	Page      int32
-	Limit     int32
-	Offset    int32
+	ContestId int32
+	UserId    int32
+	Pagination
 }
 
-type ParticipantGetByUserIdRequest struct {
-	ContestId int
-	UserId    int
+type ParticipantGetByIdRequest struct {
+	ContestId int32
+	UserId    int32
 }
 
 type ParticipantRegisterRequest struct {
-	ContestId       int
+	ContestId       int32
 	ParticipantType string
+}
+
+type GetStandingsRequest struct {
+	ContestId int32
+	UserId    int32
+	Pagination
 }

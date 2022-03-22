@@ -17,9 +17,9 @@ func (s *Server) basicHandler() chi.Router {
 	ss := services.NewSubmissionService(services.SubmissionServiceWithStore(s.store), services.SubmissionServiceWithBroker(s.broker), services.SubmissionServiceWithCache(s.cache))
 	ufs := services.NewUploadFileService(services.UploadFileServiceWithStore(s.store))
 	as := services.NewAuthService(services.AuthServiceWithStore(s.store))
-	cs := services.NewContestService(services.ContestServiceWithStore(s.store))
+	cs := services.NewContestService(services.ContestServiceWithStore(s.store), services.ContestServiceWithBroker(s.broker))
 	ps := services.NewProblemService(services.ProblemServiceWithStore(s.store))
-	ps2 := services.NewParticipantRepository(services.ParticipantServiceWithStore(s.store))
+	ps2 := services.NewParticipantService(services.ParticipantServiceWithStore(s.store))
 	ufs2 := services.NewUserFriendService(services.UserFriendsServiceWithStore(s.store))
 
 	uh := handler.NewUserHandler(handler.WithUserService(us))
@@ -59,11 +59,12 @@ func (s *Server) basicHandler() chi.Router {
 	})
 
 	r.Route("/problemset", func(r chi.Router) {
-		r.Get("/", ph.Problemset)
+		r.With(middleware.Paginate).Get("/", ph.Problemset)
 	})
 
 	r.HandleFunc("/sessions", ah.CreateSession())
 	r.Route("/contests", func(r chi.Router) {
+		r.Get("/by-time-interval", ch.FindByTimeInterval)
 		r.Get("/", ch.FindAll)
 		r.Post("/", ch.Create)
 		r.With(middleware.Paginate).Get("/", ch.FindAll)
@@ -113,7 +114,7 @@ func (s *Server) PrepareContestRoutes(r chi.Router, h *handler.ContestHander) {
 }
 
 func (s *Server) PrepareParticipantsRoutes(r chi.Router, h *handler.ParticipantHandler) {
-	r.Route("/standings", func(r chi.Router) {
+	r.Route("/contestRegistrants", func(r chi.Router) {
 		r.With(middleware.Paginate).Get("/", h.FindAll)
 		r.With(middleware.Paginate).Get("/friends", h.FindFriends)
 	})

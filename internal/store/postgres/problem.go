@@ -27,39 +27,41 @@ func NewProblemRepository(conn *sqlx.DB) store.ProblemRepository {
 
 func (p ProblemRepository) Problemset(ctx context.Context, req *dto.ProblemsetRequest) ([]*datastruct.Problem, error) {
 	problems := make([]*datastruct.Problem, 0)
-	if req.FilterTag != "" {
-		if err := p.conn.Select(&problems,
-			`SELECT
-			p.id "id",
-			p.contest_id "contest_id",
-			p.difficulty "difficulty",
-			p.points "points",
-			p.index "index",
-			pt.name "name",
-			pt.input "input",
-			pt.output "output",
-			pt.statement "statement"
+	if req.Filter != "" {
+		if err := p.conn.Select(&problems, `
+			SELECT
+				p.id "id",
+				p.contest_id "contest_id",
+				p.difficulty "difficulty",
+				p.points "points",
+				p.index "index",
+				pt.name "name",
+				pt.input "input",
+				pt.output "output",
+				pt.statement "statement",
+				pt.language_code "language_code"
 			FROM problems p
 				JOIN problem_translation pt on pt.problem_id = p.id 
 				JOIN problems_tags pt2 on pt2.problem_id = p.id
 				JOIN tags as t on pt2.tag_id = t.id
 			WHERE t.name = $1
 				AND pt.language_code = $2`,
-			req.FilterTag, req.LanguageCode); err != nil {
+			req.Filter, req.LanguageCode); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := p.conn.Select(&problems,
-			`SELECT
-			p.id "id",
-			p.contest_id "contest_id",
-			p.difficulty "difficulty",
-			p.points "points",
-			p.index "index",
-			pt.name "name",
-			pt.input "input",
-			pt.output "output",
-			pt.statement "statement"
+		if err := p.conn.Select(&problems, `
+			SELECT
+				p.id "id",
+				p.contest_id "contest_id",
+				p.difficulty "difficulty",
+				p.points "points",
+				p.index "index",
+				pt.name "name",
+				pt.input "input",
+				pt.output "output",
+				pt.statement "statement",
+				pt.language_code "language_code"
 			FROM problems p
 				JOIN problem_translation pt on p.id = pt.problem_id
 			WHERE p.difficulty BETWEEN $1 AND $2 
@@ -75,8 +77,8 @@ func (p ProblemRepository) Problemset(ctx context.Context, req *dto.ProblemsetRe
 
 func (p ProblemRepository) FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error) {
 	problems := make([]*datastruct.Problem, 0)
-	if err := p.conn.Select(&problems,
-		`SELECT
+	err := p.conn.Select(&problems, `
+		SELECT
 			p.id "id",
 			p.contest_id "contest_id",
 			p.difficulty "difficulty",
@@ -85,14 +87,14 @@ func (p ProblemRepository) FindAll(ctx context.Context, req *dto.ProblemFindAllR
 			pt.name "name",
 			pt.input "input",
 			pt.output "output",
-			pt.statement "statement"
-			FROM problems p
-				JOIN problem_translation pt on p.id = pt.problem_id
-			WHERE p.contest_id = $1 
-				AND pt.language_code = $2
-			OFFSET $3
-			LIMIT $4`,
-		req.ContestId, req.LanguageCode.String(), req.Offset, req.Limit); err != nil {
+			pt.statement "statement",
+		    pt.language_code "language_code"
+		FROM problems p
+			JOIN problem_translation pt on p.id = pt.problem_id
+		WHERE p.contest_id = $1 
+			AND pt.language_code = $2`,
+		req.ContestId, req.LanguageCode.String())
+	if err != nil {
 		return nil, err
 	}
 	return problems, nil
@@ -100,8 +102,8 @@ func (p ProblemRepository) FindAll(ctx context.Context, req *dto.ProblemFindAllR
 
 func (p ProblemRepository) GetById(ctx context.Context, req *dto.ProblemGetByIdRequest) (*datastruct.Problem, error) {
 	problem := new(datastruct.Problem)
-	if err := p.conn.Get(problem,
-		`SELECT 
+	err := p.conn.Get(problem, `
+		SELECT 
 			p.id "id",
        		p.contest_id "contest_id",
        		p.difficulty "difficulty",
@@ -110,12 +112,14 @@ func (p ProblemRepository) GetById(ctx context.Context, req *dto.ProblemGetByIdR
 			pt.name "name",
 			pt.input "input",
        		pt.output "output",
-       		pt.statement "statement"
-			FROM problems p
-				JOIN problem_translation pt on p.id = pt.problem_id
-			WHERE p.id = $1
-				AND pt.language_code = $2`,
-		req.ProblemId, req.LanguageCode.String()); err != nil {
+       		pt.statement "statement",
+		       		pt.language_code "language_code"
+		FROM problems p
+			JOIN problem_translation pt on p.id = pt.problem_id
+		WHERE p.id = $1
+			AND pt.language_code = $2`,
+		req.ProblemId, req.LanguageCode.String())
+	if err != nil {
 		return nil, err
 	}
 	return problem, nil
@@ -126,15 +130,15 @@ func (p ProblemRepository) Create(ctx context.Context, problem *datastruct.Probl
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(
-		`INSERT INTO problems(contest_id, index, difficulty, points) 
+	_, err = tx.Exec(`
+		INSERT INTO problems(contest_id, index, difficulty, points) 
 			VALUES ($1, $2, $3, $4)`,
 		problem.ContestId, problem.Index, problem.Difficulty, problem.Points)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(
-		`INSERT INTO problem_translation(problem_id, name, statement, input, output) 
+	_, err = tx.Exec(`
+		INSERT INTO problem_translation(problem_id, name, statement, input, output) 
 			VALUES (lastval(), $1, $2, $3, $4)`,
 		problem.Name, problem.Statement, problem.Input, problem.Output)
 	if err != nil {
@@ -148,18 +152,18 @@ func (p ProblemRepository) Create(ctx context.Context, problem *datastruct.Probl
 
 func (p ProblemRepository) Update(ctx context.Context, problem *datastruct.Problem) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	_, err = tx.Exec(
-		`UPDATE problems 
+	_, err = tx.Exec(`
+		UPDATE problems 
 			SET contest_id = $1, index = $2, difficulty = $3, points = $4
-			WHERE id = $4`,
+		WHERE id = $4`,
 		problem.ContestId, problem.Index, problem.Difficulty, problem.Id, problem.Points)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(
-		`UPDATE problem_translation 
+	_, err = tx.Exec(`
+		UPDATE problem_translation 
 			SET name = $1, statement = $2, input = $3, output = $4
-			WHERE problem_id = $5`,
+		WHERE problem_id = $5`,
 		problem.Name, problem.Statement, problem.Input, problem.Output, problem.Id)
 	if err != nil {
 		return err
@@ -172,15 +176,15 @@ func (p ProblemRepository) Update(ctx context.Context, problem *datastruct.Probl
 
 func (p ProblemRepository) Delete(ctx context.Context, id int) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	_, err = tx.Exec(
-		`DELETE FROM problems 
-			WHERE id = $1`,
+	_, err = tx.Exec(`
+		DELETE FROM problems 
+		WHERE id = $1`,
 		id)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(
-		`DELETE FROM problem_translation
+	_, err = tx.Exec(`
+		DELETE FROM problem_translation
 		WHERE problem_id = $1`,
 		id)
 	if err != nil {

@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
-	"site/internal/consts"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
+	message_broker "site/internal/message_broker"
+	"site/internal/middleware"
 	"site/internal/store"
 )
 
@@ -14,6 +16,7 @@ const (
 
 type ContestService interface {
 	FindAll(ctx context.Context, query *dto.ContestFindAllRequest) ([]*datastruct.Contest, error)
+	FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeIntervalRequest) ([]*datastruct.Contest, error)
 	GetById(ctx context.Context, req *dto.ContestGetByIdRequest) (*datastruct.Contest, error)
 	Create(ctx context.Context, contest *datastruct.Contest) error
 	Update(ctx context.Context, contest *datastruct.Contest) error
@@ -21,7 +24,8 @@ type ContestService interface {
 }
 
 type ContestServiceImpl struct {
-	store store.Store
+	store  store.Store
+	broker message_broker.MessageBroker
 }
 
 func NewContestService(opts ...ContestServiceOption) ContestService {
@@ -38,18 +42,29 @@ func (c ContestServiceImpl) FindAll(ctx context.Context, req *dto.ContestFindAll
 	return c.store.Contests().FindAll(ctx, req)
 }
 
+func (c ContestServiceImpl) FindByTimeInterval(ctx context.Context, req *dto.ContestFindByTimeIntervalRequest) ([]*datastruct.Contest, error) {
+	return c.store.Contests().FindByTimeInterval(ctx, req)
+}
+
 func (c ContestServiceImpl) GetById(ctx context.Context, req *dto.ContestGetByIdRequest) (*datastruct.Contest, error) {
 	return c.store.Contests().GetById(ctx, req)
 }
 
 func (c ContestServiceImpl) Create(ctx context.Context, contest *datastruct.Contest) error {
-	return c.store.Contests().Create(ctx, contest)
+	err := c.store.Contests().Create(ctx, contest)
+	if err != nil {
+		return err
+	}
+	if err := c.broker.Contest().CreateContest(contest); err != nil {
+		logger.Logger.Error(err.Error())
+	}
+	return nil
 }
 
 func (c ContestServiceImpl) Update(ctx context.Context, contest *datastruct.Contest) error {
 	_, err := c.store.Contests().GetById(ctx, &dto.ContestGetByIdRequest{
 		ContestId:    contest.Id,
-		LanguageCode: consts.EN,
+		LanguageCode: middleware.LanguageCodeFromCtx(ctx),
 	})
 	if err != nil {
 		return err
@@ -60,7 +75,7 @@ func (c ContestServiceImpl) Update(ctx context.Context, contest *datastruct.Cont
 func (c ContestServiceImpl) Delete(ctx context.Context, id int) error {
 	_, err := c.store.Contests().GetById(ctx, &dto.ContestGetByIdRequest{
 		ContestId:    int32(id),
-		LanguageCode: consts.EN,
+		LanguageCode: middleware.LanguageCodeFromCtx(ctx),
 	})
 	if err != nil {
 		return err

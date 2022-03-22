@@ -23,6 +23,26 @@ func NewParticipantHandler(opts ...ParticipantHandlerOption) *ParticipantHandler
 	return ph
 }
 
+func (ph *ParticipantHandler) Standings(w http.ResponseWriter, r *http.Request) {
+	contestIdStr := chi.URLParam(r, "contestId")
+	contestId, err := strconv.Atoi(contestIdStr)
+	if err != nil {
+		Error(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	standings, err := ph.service.Standings(r.Context(), &dto.GetStandingsRequest{
+		ContestId: int32(contestId),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
+	})
+
+	Respond(w, r, http.StatusOK, standings)
+
+}
+
 func (ph *ParticipantHandler) Register(w http.ResponseWriter, r *http.Request) {
 	contestIdStr := chi.URLParam(r, "contestId")
 	contestId, err := strconv.Atoi(contestIdStr)
@@ -31,10 +51,10 @@ func (ph *ParticipantHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	participant_type := r.URL.Query().Get("participant_type")
+	participantType := r.URL.Query().Get("participant_type")
 	req := &dto.ParticipantRegisterRequest{
-		ContestId:       contestId,
-		ParticipantType: participant_type,
+		ContestId:       int32(contestId),
+		ParticipantType: participantType,
 	}
 	err = ph.service.Register(r.Context(), req)
 	if err != nil {
@@ -53,9 +73,11 @@ func (ph *ParticipantHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &dto.ParticipantFindAllRequest{
-		ContestId: contestId,
-		Page:      r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter:    r.Context().Value(middleware.CtxKeyFilter).(string),
+		ContestId: int32(contestId),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 	}
 
 	users, err := ph.service.FindAll(r.Context(), req)
@@ -75,9 +97,11 @@ func (ph *ParticipantHandler) FindFriends(w http.ResponseWriter, r *http.Request
 	}
 
 	req := &dto.ParticipantFindFriendsRequest{
-		ContestId: contestId,
-		Page:      r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter:    r.Context().Value(middleware.CtxKeyFilter).(string),
+		ContestId: int32(contestId),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 	}
 
 	users, err := ph.service.FindFriends(r.Context(), req)

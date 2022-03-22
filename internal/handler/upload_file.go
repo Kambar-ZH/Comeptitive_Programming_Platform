@@ -44,8 +44,8 @@ func (uf UploadFileHandler) UploadFile() http.HandlerFunc {
 			return
 		}
 		submission, err := uf.service.UploadFile(r.Context(), &dto.UploadFileRequest{
-			ProblemId: problemId,
-			ContestId: contestId,
+			ProblemId: int32(problemId),
+			ContestId: int32(contestId),
 			File:      file,
 			FileName:  multipartFileHeader.Filename,
 		})

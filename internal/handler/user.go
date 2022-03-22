@@ -39,8 +39,10 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (uh *UserHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	req := &dto.UserFindAllRequest{
-		Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
-		Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 	}
 
 	users, err := uh.service.FindAll(r.Context(), req)
@@ -53,7 +55,10 @@ func (uh *UserHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 
 func (uh *UserHandler) FindFriends(w http.ResponseWriter, r *http.Request) {
 	req := &dto.UserFindFriendsRequest{
-		Page: r.Context().Value(middleware.CtxKeyPage).(int32),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 	}
 
 	users, err := uh.service.FindFriends(r.Context(), req)

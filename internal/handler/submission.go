@@ -57,9 +57,11 @@ func (sh *SubmissionHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req := &dto.SubmissionFindAllRequest{
-		Page:             r.Context().Value(middleware.CtxKeyPage).(int32),
-		FilterUserHandle: r.Context().Value(middleware.CtxKeyFilter).(string),
-		ContestId:        int32(contestId),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
+		ContestId: int32(contestId),
 	}
 
 	submissions, err := sh.service.All(r.Context(), req)

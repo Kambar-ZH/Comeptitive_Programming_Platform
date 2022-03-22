@@ -17,6 +17,10 @@ import (
 	"time"
 )
 
+var (
+	penaltyArrest = 50
+)
+
 type UploadFileService interface {
 	UploadFile(ctx context.Context, req *dto.UploadFileRequest) (*datastruct.Submission, error)
 }
@@ -51,6 +55,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		LanguageCode: consts.EN,
 	})
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return err
 	}
 	if contest.Phase != consts.CODING.String() {
@@ -62,6 +67,7 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		LanguageCode: consts.EN,
 	})
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return err
 	}
 
@@ -78,25 +84,44 @@ func (u UploadFileServiceImpl) assignPoints(ctx context.Context, submission *dat
 		ProblemId: submission.ProblemId,
 		UserId:    submission.UserId,
 	})
-	if err != nil {
+	if problemResults == nil {
 		problemResults = &datastruct.ProblemResult{
 			UserId:                       submission.UserId,
 			ProblemId:                    submission.ProblemId,
 			ContestId:                    submission.ContestId,
-			Points:                       points,
+			Points:                       0,
 			Penalty:                      0,
 			LastSuccessfulSubmissionTime: time.Now(),
 		}
 		u.store.ProblemResults().Create(ctx, problemResults)
 	}
-	logger.Logger.Sugar().Debugf("%v", problemResults)
 
-	if submission.Verdict != string(consts.PASSED) {
+	pointsBefore := problemResults.Points
+
+	if submission.Verdict != string(consts.PRETESTS_PASSED) {
 		problemResults.Penalty++
+		points -= int32(penaltyArrest)
 	}
 
 	if err = u.store.ProblemResults().Update(ctx, problemResults); err != nil {
 		logger.Logger.Error("couldn't update problem results")
+		return err
+	}
+
+	user, ok := middleware.UserFromCtx(ctx)
+	if !ok {
+		return middleware.ErrNotAuthenticated
+	}
+
+	participant, err := u.store.Participants().GetById(ctx, &dto.ParticipantGetByIdRequest{
+		ContestId: contest.Id,
+		UserId:    user.Id,
+	})
+
+	participant.Points += points - pointsBefore
+
+	if err = u.store.Participants().Update(ctx, participant); err != nil {
+		logger.Logger.Error("couldn't update participant points")
 		return err
 	}
 
@@ -107,13 +132,16 @@ func (u UploadFileServiceImpl) saveInMemory(dir string, file multipart.File, fil
 	fileExtension := tools.ExtensionRegex.ReplaceAllString(fileName, "")
 	tempFile, err := ioutil.TempFile(dir, fmt.Sprintf("*.%s", fileExtension))
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return nil, err
 	}
 	defer tempFile.Close()
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return nil, err
 	}
+
 	tempFile.Write(fileBytes)
 	return tempFile, nil
 }
@@ -130,24 +158,27 @@ func (u UploadFileServiceImpl) UploadFile(ctx context.Context, req *dto.UploadFi
 		ProblemId:                   req.ProblemId,
 	})
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return nil, err
 	}
 	submission := &datastruct.Submission{
-		Verdict:          string(res.Verdict),
+		Verdict:          res.Verdict.String(),
 		FailedTest:       res.FailedTest,
-		ContestId:        int32(req.ContestId),
-		ProblemId:        int32(req.ProblemId),
+		ContestId:        req.ContestId,
+		ProblemId:        req.ProblemId,
 		SolutionFilePath: filePath,
 	}
 	if err = u.Create(ctx, submission); err != nil {
+		logger.Logger.Error(err.Error())
 		return nil, err
 	}
 	return submission, nil
 }
 
 func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTestCasesRequest) (*dto.RunTestCasesResponse, error) {
-	validator, err := u.store.Validators().GetByProblemId(ctx, req.ProblemId)
+	validator, err := u.store.Validators().GetByProblemId(ctx, int(req.ProblemId))
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return &dto.RunTestCasesResponse{Verdict: consts.UNKNOWN_ERROR}, err
 	}
 
@@ -156,12 +187,12 @@ func (u UploadFileServiceImpl) RunTestCases(ctx context.Context, req *dto.RunTes
 		if err != nil {
 			return nil, err
 		}
-		if verdict != consts.PASSED {
+		if verdict != consts.PRETESTS_PASSED {
 			return &dto.RunTestCasesResponse{
 				Verdict:    verdict,
 				FailedTest: testCase.Id,
 			}, nil
 		}
 	}
-	return &dto.RunTestCasesResponse{Verdict: consts.PASSED}, nil
+	return &dto.RunTestCasesResponse{Verdict: consts.PRETESTS_PASSED}, nil
 }

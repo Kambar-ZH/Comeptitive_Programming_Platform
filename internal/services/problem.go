@@ -56,8 +56,6 @@ func (p ProblemServiceImpl) Problemset(ctx context.Context, req *dto.ProblemsetR
 }
 
 func (p ProblemServiceImpl) FindAll(ctx context.Context, req *dto.ProblemFindAllRequest) ([]*datastruct.Problem, error) {
-	req.Limit = problemsPerPage
-	req.Offset = (req.Page - 1) * problemsPerPage
 	problems, err := p.store.Problems().FindAll(ctx, req)
 	if err != nil {
 		return nil, err

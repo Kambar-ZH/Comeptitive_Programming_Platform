@@ -8,6 +8,7 @@ type (
 		Close() error
 
 		Cache() CacheBroker
+		Contest() ContestBroker
 	}
 
 	SubBrokerWithClient interface {

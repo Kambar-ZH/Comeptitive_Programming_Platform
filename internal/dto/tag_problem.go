@@ -1,6 +1,6 @@
 package dto
 
 type TagProblemCreateRequest struct {
-	TagId     int
-	ProblemId int
+	TagId     int32
+	ProblemId int32
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"site/internal/datastruct"
 	"site/internal/dto"
+	"site/internal/logger"
 	"site/internal/store"
 )
 
@@ -28,12 +29,12 @@ func (c ContestRepository) FindAll(ctx context.Context, req *dto.ContestFindAllR
 	contests := make([]*datastruct.Contest, 0)
 	if err := c.conn.Select(&contests,
 		`SELECT 
-		c.id "id",
-       	c.start_date "start_date",
-       	c.end_date "end_date",
-       	c.phase "phase",
-       	ct.name "name",
-       	ct.description "description"
+			c.id "id",
+			c.start_date "start_date",
+			c.end_date "end_date",
+			c.phase "phase",
+			ct.name "name",
+			ct.description "description"
 		FROM contests c
 			JOIN contest_translation ct on c.id = ct.contest_id
 		WHERE ct.language_code = $1
@@ -50,12 +51,12 @@ func (c ContestRepository) FindByTimeInterval(ctx context.Context, req *dto.Cont
 	contests := make([]*datastruct.Contest, 0)
 	if err := c.conn.Select(&contests,
 		`SELECT 
-		c.id "id",
-       	c.start_date "start_date",
-       	c.end_date "end_date",
-       	c.phase "phase",
-       	ct.name "name",
-       	ct.description "description"
+			c.id "id",
+			c.start_date "start_date",
+			c.end_date "end_date",
+			c.phase "phase",
+			ct.name "name",
+			ct.description "description"
 		FROM contests c
 			JOIN contest_translation ct on c.id = ct.contest_id
 		WHERE start_date BETWEEN $1 AND $2
@@ -68,19 +69,21 @@ func (c ContestRepository) FindByTimeInterval(ctx context.Context, req *dto.Cont
 
 func (c ContestRepository) GetById(ctx context.Context, req *dto.ContestGetByIdRequest) (*datastruct.Contest, error) {
 	contest := new(datastruct.Contest)
-	if err := c.conn.Get(contest,
-		`SELECT 
-		c.id "id",
-       	c.start_date "start_date",
-       	c.end_date "end_date",
-       	c.phase "phase",
-       	ct.name "name",
-       	ct.description "description"
+	err := c.conn.Get(contest, `
+		SELECT 
+			c.id "id",
+       		c.start_date "start_date",
+       		c.end_date "end_date",
+       		c.phase "phase",
+       		ct.name "name",
+       		ct.description "description"
 		FROM contests c
 			JOIN contest_translation ct on c.id = ct.contest_id
 		WHERE id = $1
 			AND ct.language_code = $2`,
-		req.ContestId, req.LanguageCode.String()); err != nil {
+		req.ContestId, req.LanguageCode.String())
+	if err != nil {
+		logger.Logger.Error(err.Error())
 		return nil, err
 	}
 	return contest, nil
@@ -94,6 +97,7 @@ func (c ContestRepository) Create(ctx context.Context, contest *datastruct.Conte
 			VALUES ($1, $2)`,
 		contest.StartDate, contest.EndDate)
 	if err != nil {
+		logger.Logger.Error(err.Error())
 		return err
 	}
 	_, err = tx.Exec(
@@ -105,6 +109,7 @@ func (c ContestRepository) Create(ctx context.Context, contest *datastruct.Conte
 		return err
 	}
 	if err = tx.Commit(); err != nil {
+		logger.Logger.Error(err.Error())
 		return err
 	}
 	return nil

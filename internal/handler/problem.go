@@ -49,13 +49,6 @@ func (ph *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ph *ProblemHandler) Problemset(w http.ResponseWriter, r *http.Request) {
-
-	pageStr := r.URL.Query().Get("page")
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		page = 1
-	}
-
 	minDifficultyStr := r.URL.Query().Get("minDifficulty")
 	minDifficulty, err := strconv.Atoi(minDifficultyStr)
 	if err != nil {
@@ -68,13 +61,13 @@ func (ph *ProblemHandler) Problemset(w http.ResponseWriter, r *http.Request) {
 		maxDifficulty = 5000
 	}
 
-	filterTag := r.URL.Query().Get("filterTag")
-
 	req := &dto.ProblemsetRequest{
-		Page:          int32(page),
+		Pagination: dto.Pagination{
+			Page:   r.Context().Value(middleware.CtxKeyPage).(int32),
+			Filter: r.Context().Value(middleware.CtxKeyFilter).(string),
+		},
 		MinDifficulty: int32(minDifficulty),
 		MaxDifficulty: int32(maxDifficulty),
-		FilterTag:     filterTag,
 		LanguageCode:  middleware.LanguageCodeFromCtx(r.Context()),
 	}
 
@@ -96,7 +89,6 @@ func (ph *ProblemHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &dto.ProblemFindAllRequest{
-		Page:         r.Context().Value(middleware.CtxKeyPage).(int32),
 		ContestId:    int32(contestId),
 		LanguageCode: middleware.LanguageCodeFromCtx(r.Context()),
 	}
